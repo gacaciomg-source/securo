@@ -1,8 +1,10 @@
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth import current_optional_user
 from app.core.database import get_async_session
 from app.core.workspace_context import (
     WorkspaceContext,
@@ -27,26 +29,49 @@ from app.schemas.bank_connection import (
     ReauthUrlResponse,
     ReconnectTokenResponse,
 )
-from app.services import connection_service
+from app.models.user import User
+from app.services import connection_service, provider_credentials_service
 from app.services.transfer_detection_service import detect_transfer_pairs, unlink_transfer_pair
 
 router = APIRouter(prefix="/api/connections", tags=["connections"])
 
 
 @router.get("/providers")
-async def get_available_providers():
-    """List all known open finance providers with configuration status."""
-    return {"providers": all_known_providers()}
+async def get_available_providers(
+    user: Optional[User] = Depends(current_optional_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    """List all known open finance providers with configuration status.
+
+    For someone signed in, a provider also counts as configured when they
+    saved keys of their own for it, and `has_personal_credentials` says
+    whether they did: when only the instance's keys exist, the client
+    warns that connecting goes through the shared account, which the free
+    Meu Pluggy plan only allows for the account holder's own banks.
+    """
+    personal: set[str] = set()
+    if user is not None:
+        personal = await provider_credentials_service.personal_providers_for_user(
+            session, user.id
+        )
+    providers = [
+        {**p, "has_personal_credentials": p["name"] in personal}
+        for p in all_known_providers(personal)
+    ]
+    return {"providers": providers}
 
 
 @router.post("/connect-token", response_model=ConnectTokenResponse)
 async def create_connect_token(
     data: ConnectTokenRequest,
     ctx: WorkspaceContext = Depends(current_writable_workspace),
+    session: AsyncSession = Depends(get_async_session),
 ):
     """Create a connect token for widget-based bank connection flows."""
     try:
-        token_data = await connection_service.create_connect_token(data.provider, ctx.user_id)
+        token_data = await connection_service.create_connect_token(
+            session, data.provider, ctx.user_id
+        )
         return ConnectTokenResponse(**token_data)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -230,7 +255,7 @@ async def get_reconnect_token(
 
     try:
         token_data = await connection_service.create_connect_token(
-            connection.provider, ctx.user_id, item_id=item_id
+            session, connection.provider, ctx.user_id, item_id=item_id, connection=connection
         )
         return ReconnectTokenResponse(**token_data)
     except Exception as e:

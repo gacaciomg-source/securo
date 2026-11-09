@@ -66,10 +66,19 @@ def list_providers() -> list[dict[str, str]]:
     ]
 
 
-def all_known_providers() -> list[dict]:
-    """Return all known providers with a configured flag."""
+def is_provider_registered(name: str) -> bool:
+    """Whether the instance itself has keys for this provider."""
+    return name in _PROVIDERS
+
+
+def all_known_providers(extra_configured: frozenset[str] | set[str] = frozenset()) -> list[dict]:
+    """Return all known providers with a configured flag.
+
+    ``extra_configured`` names providers the caller can use through keys of
+    their own (see provider_credentials_service), on top of the instance's.
+    """
     return [
-        {**p, "configured": p["name"] in _PROVIDERS}
+        {**p, "configured": p["name"] in _PROVIDERS or p["name"] in extra_configured}
         for p in KNOWN_PROVIDERS
     ]
 
@@ -134,6 +143,7 @@ __all__ = [
     "SessionExpiredError",
     "register_provider",
     "get_provider",
+    "is_provider_registered",
     "list_providers",
     "all_known_providers",
     "get_storage_provider",

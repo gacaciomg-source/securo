@@ -28,7 +28,7 @@ from app.models.payee import Payee, PayeeMapping
 from app.models.transaction import Transaction
 from app.models.transaction_category_line import TransactionCategoryLine
 from app.models.user import User
-from app.providers import get_provider
+from app.providers import BankProvider, get_provider
 from app.providers.base import (
     AccountData,
     HoldingData,
@@ -39,7 +39,7 @@ from app.providers.base import (
     TransactionData,
 )
 from app.services import oauth_state
-from app.services import admin_service
+from app.services import admin_service, provider_credentials_service
 from app.services import category_line_service, reconciliation_service, recurring_match_service
 from app.services.text_similarity import token_overlap
 from app.services.account_service import (
@@ -265,7 +265,9 @@ def _account_balance(acc_data: AccountData, deducted: set[str]) -> Decimal:
 
 
 async def _fetch_holdings(
-    connection: BankConnection, credentials: dict
+    connection: BankConnection,
+    credentials: dict,
+    provider: Optional[BankProvider] = None,
 ) -> Optional[list[HoldingData]]:
     """Fetch the connection's holdings, or None when the provider call fails.
 
@@ -274,7 +276,7 @@ async def _fetch_holdings(
     sync), so they are logged and reported as None.
     """
     try:
-        provider = get_provider(connection.provider)
+        provider = provider or get_provider(connection.provider)
         return await provider.get_holdings(credentials)
     except Exception:  # noqa: BLE001
         logger.exception(
@@ -479,6 +481,7 @@ async def _sync_holdings(
     connection: BankConnection,
     credentials: dict,
     holdings: Optional[list[HoldingData]] = None,
+    provider: Optional[BankProvider] = None,
 ) -> None:
     """Fetch investment holdings from the provider and upsert them as Assets.
 
@@ -499,7 +502,7 @@ async def _sync_holdings(
     bank-account sync that just succeeded.
     """
     if holdings is None:
-        holdings = await _fetch_holdings(connection, credentials)
+        holdings = await _fetch_holdings(connection, credentials, provider)
         if holdings is None:
             return
 
@@ -1155,6 +1158,26 @@ async def _find_installment_source(
     return result.scalars().first()
 
 
+async def _provider_for_user(
+    session: AsyncSession, provider_name: str, user_id: uuid.UUID
+) -> BankProvider:
+    """Provider for a new connection: the person's own keys, else the instance's."""
+    personal = await provider_credentials_service.personal_provider_for_user(
+        session, provider_name, user_id
+    )
+    return personal or get_provider(provider_name)
+
+
+async def _provider_for_connection(
+    session: AsyncSession, connection: BankConnection
+) -> BankProvider:
+    """Provider for an existing connection: whichever app created its item."""
+    personal = await provider_credentials_service.personal_provider_for_connection(
+        session, connection
+    )
+    return personal or get_provider(connection.provider)
+
+
 async def get_connections(session: AsyncSession, workspace_id: uuid.UUID) -> list[BankConnection]:
     result = await session.execute(
         select(BankConnection)
@@ -1214,7 +1237,7 @@ async def get_reauth_url(
     connection = await get_connection(session, connection_id, workspace_id)
     if not connection:
         raise ValueError("Connection not found")
-    provider = get_provider(connection.provider)
+    provider = await _provider_for_connection(session, connection)
     state = await oauth_state.store_state(
         {
             "user_id": str(user_id),
@@ -1256,9 +1279,21 @@ async def list_provider_institutions(
 
 
 async def create_connect_token(
-    provider_name: str, user_id: uuid.UUID, item_id: str | None = None
+    session: AsyncSession,
+    provider_name: str,
+    user_id: uuid.UUID,
+    item_id: str | None = None,
+    connection: Optional[BankConnection] = None,
 ) -> dict:
-    provider = get_provider(provider_name)
+    """A widget token for a new connection, or for reconnecting ``connection``.
+
+    A reconnect has to go through the app that owns the item, which is the
+    connection owner's, not necessarily the person clicking.
+    """
+    if connection is not None:
+        provider = await _provider_for_connection(session, connection)
+    else:
+        provider = await _provider_for_user(session, provider_name, user_id)
     token_data = await provider.create_connect_token(str(user_id), item_id=item_id)
     return {"access_token": token_data.access_token}
 
@@ -1327,8 +1362,14 @@ async def handle_oauth_callback(
     if not provider_name:
         raise ValueError("OAuth callback missing provider")
 
-    provider = get_provider(provider_name)
+    if existing_reconnect:
+        provider = await _provider_for_connection(session, existing_reconnect)
+    else:
+        provider = await _provider_for_user(session, provider_name, user_id)
     connection_data = await provider.handle_oauth_callback(code)
+    connection_data.credentials = provider_credentials_service.stamp_personal_client_id(
+        provider, connection_data.credentials
+    )
 
     if existing_reconnect:
         existing_reconnect.external_id = connection_data.external_id
@@ -1391,7 +1432,7 @@ async def handle_oauth_callback(
     # decided from the live synced assets already stored.
     holdings: Optional[list[HoldingData]] = None
     if _sync_assets_enabled(connection.settings):
-        holdings = await _fetch_holdings(connection, connection_data.credentials)
+        holdings = await _fetch_holdings(connection, connection_data.credentials, provider)
     auto_invested_deducted = await _resolve_auto_invested_deductions(
         session, connection, holdings, connection_data.accounts
     )
@@ -1592,7 +1633,7 @@ async def handle_oauth_callback(
     # immediately after the widget closes.
     if holdings is not None:
         await _sync_holdings(
-            session, user_id, connection, connection_data.credentials, holdings
+            session, user_id, connection, connection_data.credentials, holdings, provider
         )
 
     connection.last_sync_at = datetime.now(timezone.utc)
@@ -2400,7 +2441,7 @@ async def sync_connection(
     # provider is a server misconfiguration, and the catch-all below would
     # wrongly stamp the (healthy) connection with status="error".
     try:
-        provider = get_provider(connection.provider)
+        provider = await _provider_for_connection(session, connection)
     except ValueError as exc:
         raise ProviderNotConfiguredError(
             f"Provider '{connection.provider}' is not configured in this process. "
@@ -2470,7 +2511,7 @@ async def sync_connection(
         # the deduction is decided from the live synced assets already stored.
         holdings: Optional[list[HoldingData]] = None
         if _sync_assets_enabled(conn_settings):
-            holdings = await _fetch_holdings(connection, credentials)
+            holdings = await _fetch_holdings(connection, credentials, provider)
         auto_invested_deducted = await _resolve_auto_invested_deductions(
             session, connection, holdings, accounts_data
         )
@@ -2975,7 +3016,9 @@ async def sync_connection(
         # don't fail the sync; a bank connector that doesn't expose
         # /investments shouldn't block the transaction sync that just succeeded.
         if holdings is not None:
-            await _sync_holdings(session, user_id, connection, credentials, holdings)
+            await _sync_holdings(
+                session, user_id, connection, credentials, holdings, provider
+            )
 
         # Reap institution rows referenced by nothing. Id-carrying servers
         # never orphan a row (renames update in place), but a name-only

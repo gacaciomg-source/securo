@@ -44,6 +44,8 @@ ALLOWLIST: dict[tuple[str, str], str] = {
     ("POST", "/passkeys/register/options"): "the requester's own credentials",
     ("POST", "/passkeys/register/verify"): "the requester's own credentials",
     ("DELETE", "/passkeys/{passkey_id}"): "the requester's own credentials",
+    ("PUT", "/api/provider-credentials/{provider}"): "the requester's own bank-provider keys",
+    ("DELETE", "/api/provider-credentials/{provider}"): "the requester's own bank-provider keys",
     ("POST", "/passkeys/authenticate/options"): "unauthenticated: this is how you log in",
     ("POST", "/passkeys/authenticate/verify"): "unauthenticated: this is how you log in",
     ("POST", "/passkeys/2fa/options"): "unauthenticated step of login",

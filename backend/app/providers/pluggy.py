@@ -440,6 +440,21 @@ def _build_account_data(acc: dict, type_mapper) -> AccountData:
     )
 
 
+async def authenticate(client_id: str, client_secret: str) -> str:
+    """Exchange a Pluggy app's client id and secret for an API key.
+
+    Raises httpx.HTTPStatusError when Pluggy rejects the pair, which is how
+    saving personal credentials tells a typo from a working key.
+    """
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            f"{PLUGGY_API_BASE}/auth",
+            json={"clientId": client_id, "clientSecret": client_secret},
+        )
+        resp.raise_for_status()
+        return resp.json()["apiKey"]
+
+
 class PluggyProvider(BankProvider):
     """Pluggy (MeuPluggy) open finance provider.
 
@@ -447,10 +462,23 @@ class PluggyProvider(BankProvider):
     1. Backend creates a connect token for the frontend widget
     2. Widget handles bank selection, login, and MFA
     3. Widget returns an Item ID which is used as the connection identifier
+
+    Built without arguments it authenticates with the instance-wide
+    PLUGGY_CLIENT_ID/SECRET. Built with a client id and secret it uses those
+    instead: the free Meu Pluggy plan only covers accounts of one holder, so
+    on a shared household install each person brings their own app keys
+    (see provider_credentials_service).
     """
 
-    _api_key: Optional[str] = None
-    _api_key_expires_at: float = 0
+    # API keys cached per client id, so one process can serve several
+    # people's Pluggy apps without re-authenticating on every call.
+    _api_keys: dict[str, tuple[str, float]] = {}
+
+    def __init__(
+        self, client_id: Optional[str] = None, client_secret: Optional[str] = None
+    ) -> None:
+        self._client_id = client_id
+        self._client_secret = client_secret
 
     @property
     def name(self) -> str:
@@ -460,28 +488,32 @@ class PluggyProvider(BankProvider):
     def flow_type(self) -> str:
         return "widget"
 
+    @property
+    def uses_personal_credentials(self) -> bool:
+        return bool(self._client_id and self._client_secret)
+
+    @property
+    def client_id(self) -> str:
+        return self._app_credentials()[0]
+
+    def _app_credentials(self) -> tuple[str, str]:
+        if self._client_id and self._client_secret:
+            return self._client_id, self._client_secret
+        settings = get_settings()
+        return settings.pluggy_client_id, settings.pluggy_client_secret.get_secret_value()
+
     async def _ensure_api_key(self) -> str:
         """Get a valid API key, refreshing if expired or about to expire (<5min remaining)."""
+        client_id, client_secret = self._app_credentials()
         now = time.time()
-        if self._api_key and (self._api_key_expires_at - now) > 300:
-            return self._api_key
+        cached = PluggyProvider._api_keys.get(client_id)
+        if cached and (cached[1] - now) > 300:
+            return cached[0]
 
-        settings = get_settings()
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(
-                f"{PLUGGY_API_BASE}/auth",
-                json={
-                    "clientId": settings.pluggy_client_id,
-                    "clientSecret": settings.pluggy_client_secret.get_secret_value(),
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
-
-        PluggyProvider._api_key = data["apiKey"]
+        api_key = await authenticate(client_id, client_secret)
         # Pluggy API keys last 2 hours
-        PluggyProvider._api_key_expires_at = now + 7200
-        return PluggyProvider._api_key
+        PluggyProvider._api_keys[client_id] = (api_key, now + 7200)
+        return api_key
 
     async def _headers(self) -> dict:
         api_key = await self._ensure_api_key()

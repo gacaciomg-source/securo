@@ -57,12 +57,14 @@ import {
   Shield,
   ShieldCheck,
   Fingerprint,
+  Plug,
 } from 'lucide-react'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { ChangePasswordDialog } from '@/components/change-password-dialog'
 import { BackupDialog } from '@/components/backup-dialog'
 import { TwoFactorSetup } from '@/components/two-factor-setup'
 import { PasskeyManagementDialog } from '@/components/passkey-management-dialog'
+import { OpenFinanceKeysDialog } from '@/components/open-finance-keys-dialog'
 import { CommandPalette } from '@/components/command-palette'
 import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
 import { GlobalChatPanel } from '@/components/global-chat-panel'
@@ -113,6 +115,7 @@ export function AppLayout() {
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [twoFactorOpen, setTwoFactorOpen] = useState(false)
   const [passkeysOpen, setPasskeysOpen] = useState(false)
+  const [openFinanceKeysOpen, setOpenFinanceKeysOpen] = useState(false)
   const [backupOpen, setBackupOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
@@ -270,6 +273,7 @@ export function AppLayout() {
             onChangePassword={() => setChangePasswordOpen(true)}
             onTwoFactor={() => setTwoFactorOpen(true)}
             onPasskeys={() => setPasskeysOpen(true)}
+            onOpenFinanceKeys={() => setOpenFinanceKeysOpen(true)}
             localAuthEnabled={localAuthEnabled}
             agentsEnabled={agentsEnabled}
             onBackup={() => setBackupOpen(true)}
@@ -626,6 +630,10 @@ export function AppLayout() {
         onClose={() => setPasskeysOpen(false)}
         localAuthEnabled={localAuthEnabled}
       />
+      <OpenFinanceKeysDialog
+        open={openFinanceKeysOpen}
+        onClose={() => setOpenFinanceKeysOpen(false)}
+      />
       <BackupDialog open={backupOpen} onClose={() => setBackupOpen(false)} />
       {quickAddOpen && (
         <Suspense fallback={null}>
@@ -651,6 +659,7 @@ function UserMenu({
   onChangePassword,
   onTwoFactor,
   onPasskeys,
+  onOpenFinanceKeys,
   localAuthEnabled,
   onBackup,
   dark,
@@ -662,6 +671,7 @@ function UserMenu({
   onChangePassword: () => void
   onTwoFactor: () => void
   onPasskeys: () => void
+  onOpenFinanceKeys: () => void
   localAuthEnabled: boolean
   onBackup: () => void
   dark?: boolean
@@ -729,6 +739,13 @@ function UserMenu({
         >
           <Fingerprint size={14} />
           {t('auth.passkeysTitle')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onOpenFinanceKeys}
+          className="flex items-center gap-2"
+        >
+          <Plug size={14} />
+          {t('openFinanceKeys.menu')}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={onBackup}

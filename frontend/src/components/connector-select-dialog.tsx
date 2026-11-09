@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Building2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { OpenFinanceKeysDialog } from '@/components/open-finance-keys-dialog'
 
 export interface Provider {
   name: string
@@ -17,6 +19,8 @@ export interface Provider {
   configured: boolean
   requires_institution_select?: boolean
   supports_asset_sync?: boolean
+  /** The signed-in person saved keys of their own for this provider. */
+  has_personal_credentials?: boolean
 }
 
 interface ConnectorSelectDialogProps {
@@ -33,6 +37,10 @@ function ConnectorSelectSession({ open, onClose, onSelect }: ConnectorSelectDial
   const { t } = useTranslation()
   const [providers, setProviders] = useState<Provider[]>([])
   const [loading, setLoading] = useState(true)
+  // Bumped after the person saves their own Pluggy keys, so Pluggy turns
+  // available without closing this dialog.
+  const [reloadKey, setReloadKey] = useState(0)
+  const [keysOpen, setKeysOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -46,7 +54,7 @@ function ConnectorSelectSession({ open, onClose, onSelect }: ConnectorSelectDial
       setLoading(false)
     })
     return () => { cancelled = true }
-  }, [])
+  }, [reloadKey])
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -85,16 +93,42 @@ function ConnectorSelectSession({ open, onClose, onSelect }: ConnectorSelectDial
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground">{p.display_name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{t(`accounts.providers.${p.name}.description`, p.description)}</p>
-                  {!p.configured && (
+                  {!p.configured && p.name !== 'pluggy' && (
                     <p className="text-xs text-amber-600 mt-1.5">
                       {t('accounts.connectorNotConfigured')}
+                    </p>
+                  )}
+                  {!p.configured && p.name === 'pluggy' && (
+                    <p className="text-xs text-amber-600 mt-1.5">
+                      {t('openFinanceKeys.needKeys')}
+                    </p>
+                  )}
+                  {/* Only the server's keys: the free Meu Pluggy plan only
+                      reaches the banks of whoever owns that account. */}
+                  {p.configured && p.name === 'pluggy' && !p.has_personal_credentials && (
+                    <p className="text-xs text-amber-600 mt-1.5">
+                      {t('openFinanceKeys.sharedAccountWarning')}
                     </p>
                   )}
                 </div>
               </button>
             ))
           )}
+          {!loading && providers.some((p) => p.name === 'pluggy') && (
+            <div className="flex justify-end pt-1">
+              <Button type="button" variant="link" size="xs" className="px-0" onClick={() => setKeysOpen(true)}>
+                {providers.find((p) => p.name === 'pluggy')?.has_personal_credentials
+                  ? t('openFinanceKeys.menu')
+                  : t('openFinanceKeys.setUp')}
+              </Button>
+            </div>
+          )}
         </div>
+        <OpenFinanceKeysDialog
+          open={keysOpen}
+          onClose={() => setKeysOpen(false)}
+          onChanged={() => setReloadKey((k) => k + 1)}
+        />
       </DialogContent>
     </Dialog>
   )

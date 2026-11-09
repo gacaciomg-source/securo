@@ -37,6 +37,7 @@
   "DELETE /api/payees/{payee_id}": 401,
   "DELETE /api/products/{product_id}": 401,
   "DELETE /api/products/{product_id}/prices/{price_id}": 401,
+  "DELETE /api/provider-credentials/{provider}": 401,
   "DELETE /api/reconciliation/rules/{node}/{strategy_id}": 401,
   "DELETE /api/recurring-transactions/{recurring_id}": 401,
   "DELETE /api/rules/packs/{pack_code}": 401,
@@ -150,6 +151,7 @@
   "GET /api/payees/{payee_id}/summary": 401,
   "GET /api/products": 401,
   "GET /api/products/{product_id}": 401,
+  "GET /api/provider-credentials/{provider}": 401,
   "GET /api/public/invoices/{token}": 404,
   "GET /api/public/invoices/{token}/logo": 404,
   "GET /api/public/invoices/{token}/pdf": 404,
@@ -336,6 +338,7 @@
   "POST /api/workspaces/{workspace_id}/members": 401,
   "PUT /api/agents/{agent_id}/tools": 401,
   "PUT /api/mortgage-payments/{payment_id}": 401,
+  "PUT /api/provider-credentials/{provider}": 401,
   "PUT /api/reconciliation/rules/{node}/order": 401
  },
  "empty": {
@@ -409,6 +412,7 @@
   "POST /api/workspaces": 422,
   "POST /api/workspaces/{workspace_id}/members": 422,
   "PUT /api/mortgage-payments/{payment_id}": 422,
+  "PUT /api/provider-credentials/{provider}": 422,
   "PUT /api/reconciliation/rules/{node}/order": 422
  },
  "ok": {
@@ -449,6 +453,7 @@
   "DELETE /api/payees/{payee_id}": 409,
   "DELETE /api/products/{product_id}": 204,
   "DELETE /api/products/{product_id}/prices/{price_id}": 404,
+  "DELETE /api/provider-credentials/{provider}": 204,
   "DELETE /api/reconciliation/rules/{node}/{strategy_id}": 400,
   "DELETE /api/recurring-transactions/{recurring_id}": 204,
   "DELETE /api/rules/packs/{pack_code}": 409,
@@ -561,6 +566,7 @@
   "GET /api/payees/{payee_id}/summary": 200,
   "GET /api/products": 200,
   "GET /api/products/{product_id}": 200,
+  "GET /api/provider-credentials/{provider}": 200,
   "GET /api/public/invoices/{token}": 404,
   "GET /api/public/invoices/{token}/logo": 404,
   "GET /api/public/invoices/{token}/pdf": 404,
@@ -746,6 +752,7 @@
   "POST /api/workspaces/{workspace_id}/members": 400,
   "PUT /api/agents/{agent_id}/tools": 200,
   "PUT /api/mortgage-payments/{payment_id}": 404,
+  "PUT /api/provider-credentials/{provider}": 422,
   "PUT /api/reconciliation/rules/{node}/order": 400
  },
  "unknown_id": {
@@ -952,6 +959,7 @@
   "DELETE /api/payees/{payee_id}": 403,
   "DELETE /api/products/{product_id}": 403,
   "DELETE /api/products/{product_id}/prices/{price_id}": 403,
+  "DELETE /api/provider-credentials/{provider}": 204,
   "DELETE /api/reconciliation/rules/{node}/{strategy_id}": 403,
   "DELETE /api/recurring-transactions/{recurring_id}": 403,
   "DELETE /api/rules/packs/{pack_code}": 403,
@@ -1106,6 +1114,7 @@
   "POST /api/workspaces/{workspace_id}/members": 403,
   "PUT /api/agents/{agent_id}/tools": 403,
   "PUT /api/mortgage-payments/{payment_id}": 403,
+  "PUT /api/provider-credentials/{provider}": 422,
   "PUT /api/reconciliation/rules/{node}/order": 403
  }
 }

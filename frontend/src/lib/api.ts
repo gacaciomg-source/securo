@@ -408,13 +408,40 @@ export const categoryGroups = {
   },
 }
 
+// A person's own bank-provider keys (Meu Pluggy). The secret is write-only:
+// reads only say whether one is saved.
+export interface ProviderCredentialStatus {
+  provider: string
+  has_personal_credentials: boolean
+  client_id: string | null
+  instance_configured: boolean
+  connections_using: number
+}
+
+export const providerCredentials = {
+  get: async (provider: string): Promise<ProviderCredentialStatus> => {
+    const { data } = await api.get(`/provider-credentials/${provider}`)
+    return data
+  },
+  save: async (
+    provider: string,
+    body: { client_id: string; client_secret: string },
+  ): Promise<ProviderCredentialStatus> => {
+    const { data } = await api.put(`/provider-credentials/${provider}`, body)
+    return data
+  },
+  remove: async (provider: string, force = false): Promise<void> => {
+    await api.delete(`/provider-credentials/${provider}`, { params: force ? { force: true } : undefined })
+  },
+}
+
 // Bank Connections
 export const connections = {
   list: async (): Promise<BankConnection[]> => {
     const { data } = await api.get('/connections')
     return data
   },
-  getProviders: async (): Promise<{ name: string; display_name: string; description: string; flow_type: string; configured: boolean; requires_institution_select?: boolean; supports_asset_sync?: boolean }[]> => {
+  getProviders: async (): Promise<{ name: string; display_name: string; description: string; flow_type: string; configured: boolean; requires_institution_select?: boolean; supports_asset_sync?: boolean; has_personal_credentials?: boolean }[]> => {
     const { data } = await api.get('/connections/providers')
     return data.providers
   },

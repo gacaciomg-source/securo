@@ -1,0 +1,25 @@
+# Securo Casal: build the images from this checkout instead of pulling the
+# upstream ones, so the household changes in this fork actually ship.
+#
+# Use it on top of the production file:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.casal.yml up -d --build
+#
+# Every backend-based service shares one locally built image. Building the
+# frontend needs about 2 GB of free RAM on the server.
+
+x-casal-backend: &casal-backend
+  image: securo-casal-backend:local
+  build: ./backend
+  pull_policy: build
+
+services:
+  migrate: *casal-backend
+  backend: *casal-backend
+  celery-worker: *casal-backend
+  celery-beat: *casal-backend
+  mcp-server: *casal-backend
+
+  frontend:
+    image: securo-casal-frontend:local
+    build: ./frontend
+    pull_policy: build

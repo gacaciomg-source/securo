@@ -3354,5 +3354,36 @@
       "categoryInUse": "Tato kategorie obsahuje části rozdělených transakcí. Nejprve upravte tato rozdělení.",
       "destinationInvalid": "Části rozdělených transakcí nemohou přejít do ignorované ani skryté kategorie."
     }
+  },
+  "openFinanceKeys": {
+    "menu": "My Open Finance keys",
+    "title": "My Open Finance keys",
+    "intro": "To pull statements from your banks for free, each person uses their own Meu Pluggy account. It takes about 5 minutes and you only do it once.",
+    "step1": "Create your free account at",
+    "step2": "In there, connect your banks and approve the access in each bank's app.",
+    "step3": "Sign in with the same account at the Pluggy dashboard and copy the Client ID and the Client Secret:",
+    "step4": "Paste both below and click Check and save.",
+    "instanceFallback": "Until you save your own keys, new bank connections use this server's shared Pluggy account.",
+    "clientIdLabel": "Client ID",
+    "clientSecretLabel": "Client Secret",
+    "secretHint": "Stored encrypted. Nobody, not even you, can see it again here.",
+    "save": "Check and save",
+    "checking": "Checking with Pluggy…",
+    "saved": "Keys saved. You can connect your banks now.",
+    "savedStatus": "Your keys are saved",
+    "connectionsUsing_one": "Used by {{count}} connected bank.",
+    "connectionsUsing_other": "Used by {{count}} connected banks.",
+    "replace": "Replace keys",
+    "remove": "Remove",
+    "removeConfirm": "Remove anyway",
+    "removeWarning_one": "{{count}} of your banks was connected with these keys and will stop updating.",
+    "removeWarning_other": "{{count}} of your banks were connected with these keys and will stop updating.",
+    "removed": "Keys removed.",
+    "done": "Done",
+    "errorInvalid": "Pluggy did not accept these keys. Check that you copied them exactly, with no extra spaces.",
+    "errorUnavailable": "We couldn't reach Pluggy right now. Try again in a few minutes.",
+    "setUp": "Set up my keys",
+    "needKeys": "Save your Meu Pluggy keys to connect your banks.",
+    "sharedAccountWarning": "This would use the server's shared Pluggy account. If your banks are under another CPF, set up your own keys first."
   }
 }

@@ -26,6 +26,26 @@ it('ignores provider responses from a closed session when reopened', async () =>
   expect(screen.getByText('New provider')).toBeInTheDocument()
 })
 
+it('warns a person without own Pluggy keys before using the shared account', async () => {
+  api.getProviders.mockResolvedValueOnce([
+    { name: 'pluggy', display_name: 'Pluggy', description: 'Synthetic', flow_type: 'widget', configured: true, has_personal_credentials: false },
+  ])
+  renderWithProviders(<ConnectorSelectDialog open onClose={vi.fn()} onSelect={vi.fn()} />)
+
+  expect(await screen.findByText(/shared Pluggy account/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Set up my keys' })).toBeInTheDocument()
+})
+
+it('does not warn once the person saved their own Pluggy keys', async () => {
+  api.getProviders.mockResolvedValueOnce([
+    { name: 'pluggy', display_name: 'Pluggy', description: 'Synthetic', flow_type: 'widget', configured: true, has_personal_credentials: true },
+  ])
+  renderWithProviders(<ConnectorSelectDialog open onClose={vi.fn()} onSelect={vi.fn()} />)
+
+  expect(await screen.findByRole('button', { name: 'My Open Finance keys' })).toBeInTheDocument()
+  expect(screen.queryByText(/shared Pluggy account/)).not.toBeInTheDocument()
+})
+
 it('ignores an earlier country request after back navigation and another selection', async () => {
   let finish!: (data: unknown) => void
   api.listInstitutions.mockResolvedValueOnce({ countries: ['DE', 'GB'] })

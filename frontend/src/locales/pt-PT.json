@@ -3186,5 +3186,36 @@
       "categoryInUse": "Esta categoria tem partes de transações divididas. Altere essas divisões primeiro.",
       "destinationInvalid": "Partes de transações divididas não podem passar para uma categoria ignorada ou oculta."
     }
+  },
+  "openFinanceKeys": {
+    "menu": "Minhas chaves do Open Finance",
+    "title": "Minhas chaves do Open Finance",
+    "intro": "Para puxar o extrato dos seus bancos de graça, cada pessoa usa a própria conta no Meu Pluggy. Leva uns 5 minutos e só precisa ser feito uma vez.",
+    "step1": "Crie sua conta grátis em",
+    "step2": "Lá dentro, conecte seus bancos e autorize o acesso no app de cada banco.",
+    "step3": "Entre com a mesma conta no painel da Pluggy e copie o Client ID e o Client Secret:",
+    "step4": "Cole os dois aqui embaixo e clique em Testar e salvar.",
+    "instanceFallback": "Enquanto você não salvar suas chaves, novas conexões usam a conta Pluggy compartilhada deste servidor.",
+    "clientIdLabel": "Client ID",
+    "clientSecretLabel": "Client Secret",
+    "secretHint": "Fica guardado criptografado. Ninguém, nem você, consegue ver de novo aqui.",
+    "save": "Testar e salvar",
+    "checking": "Conferindo com a Pluggy…",
+    "saved": "Chaves salvas. Agora você já pode conectar seus bancos.",
+    "savedStatus": "Suas chaves estão salvas",
+    "connectionsUsing_one": "Usadas por {{count}} banco conectado.",
+    "connectionsUsing_other": "Usadas por {{count}} bancos conectados.",
+    "replace": "Trocar chaves",
+    "remove": "Remover",
+    "removeConfirm": "Remover mesmo assim",
+    "removeWarning_one": "{{count}} banco seu foi conectado com estas chaves e vai parar de atualizar.",
+    "removeWarning_other": "{{count}} bancos seus foram conectados com estas chaves e vão parar de atualizar.",
+    "removed": "Chaves removidas.",
+    "done": "Pronto",
+    "errorInvalid": "A Pluggy não aceitou essas chaves. Confira se copiou certinho, sem espaços a mais.",
+    "errorUnavailable": "Não conseguimos falar com a Pluggy agora. Tente de novo em alguns minutos.",
+    "setUp": "Configurar minhas chaves",
+    "needKeys": "Salve suas chaves do Meu Pluggy para conectar seus bancos.",
+    "sharedAccountWarning": "Isso vai usar a conta Pluggy compartilhada do servidor. Se seus bancos estão em outro CPF, configure suas chaves antes."
   }
 }

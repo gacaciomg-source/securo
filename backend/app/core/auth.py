@@ -103,6 +103,10 @@ fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 _session_user = fastapi_users.current_user(active=True, optional=True)
 current_superuser = fastapi_users.current_user(active=True, superuser=True)
 
+#: The user signed in with a session JWT, or None. For routes that answer
+#: anyone but can say more to someone signed in.
+current_optional_user = _session_user
+
 
 def _bearer(request: Request) -> Optional[str]:
     header = request.headers.get("authorization") or ""
