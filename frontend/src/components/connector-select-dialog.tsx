@@ -41,6 +41,9 @@ function ConnectorSelectSession({ open, onClose, onSelect }: ConnectorSelectDial
   // available without closing this dialog.
   const [reloadKey, setReloadKey] = useState(0)
   const [keysOpen, setKeysOpen] = useState(false)
+  // Set when the person clicked Pluggy without keys of their own: once they
+  // save some, the connection they wanted starts right away.
+  const [connectAfterKeys, setConnectAfterKeys] = useState<Provider | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -73,16 +76,26 @@ function ConnectorSelectSession({ open, onClose, onSelect }: ConnectorSelectDial
               {t('accounts.noConnectorsAvailable')}
             </p>
           ) : (
-            providers.map((p) => (
+            providers.map((p) => {
+              // Pluggy without keys stays clickable: the click opens the keys
+              // dialog instead of a connection, since the free Meu Pluggy plan
+              // means each person has to bring their own.
+              const needsKeys = p.name === 'pluggy' && !p.configured
+              return (
               <button
                 key={p.name}
-                disabled={!p.configured}
+                disabled={!p.configured && !needsKeys}
                 onClick={() => {
+                  if (needsKeys) {
+                    setConnectAfterKeys(p)
+                    setKeysOpen(true)
+                    return
+                  }
                   onSelect(p)
                   onClose()
                 }}
                 className={`w-full flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
-                  p.configured
+                  p.configured || needsKeys
                     ? 'border-border hover:border-primary hover:bg-muted/50 cursor-pointer'
                     : 'border-border/50 opacity-60 cursor-not-allowed'
                 }`}
@@ -112,7 +125,8 @@ function ConnectorSelectSession({ open, onClose, onSelect }: ConnectorSelectDial
                   )}
                 </div>
               </button>
-            ))
+              )
+            })
           )}
           {!loading && providers.some((p) => p.name === 'pluggy') && (
             <div className="flex justify-end pt-1">
@@ -126,8 +140,19 @@ function ConnectorSelectSession({ open, onClose, onSelect }: ConnectorSelectDial
         </div>
         <OpenFinanceKeysDialog
           open={keysOpen}
-          onClose={() => setKeysOpen(false)}
+          onClose={() => {
+            setKeysOpen(false)
+            setConnectAfterKeys(null)
+          }}
           onChanged={() => setReloadKey((k) => k + 1)}
+          onSaved={() => {
+            if (!connectAfterKeys) return
+            const wanted = { ...connectAfterKeys, configured: true, has_personal_credentials: true }
+            setKeysOpen(false)
+            setConnectAfterKeys(null)
+            onSelect(wanted)
+            onClose()
+          }}
         />
       </DialogContent>
     </Dialog>

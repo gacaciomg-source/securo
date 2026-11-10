@@ -7,9 +7,12 @@ banks are reached through their own app.
 
 Which keys a call uses:
 
-  - A new connection uses the person's own keys when they saved some, and
-    the instance-wide PLUGGY_CLIENT_ID otherwise (connection_service falls
-    back to get_provider when the helpers below return None).
+  - A new connection uses the person's own keys when they saved some.
+    Without them, administrators fall back to the instance-wide
+    PLUGGY_CLIENT_ID; everyone else is asked for their own keys
+    (PersonalCredentialsRequiredError), so nobody's banks quietly land on
+    the server owner's Pluggy account. PLUGGY_INSTANCE_KEYS_ADMIN_ONLY=false
+    shares the instance keys with everyone instead.
   - An existing connection keeps using the app that created its item. A
     connection made with personal keys records that app's client id in its
     credentials (PERSONAL_CLIENT_ID_KEY); one without the marker predates
@@ -22,9 +25,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.services.crypto import decrypt, encrypt
+from app.core.config import get_settings
 from app.models.bank_connection import BankConnection
+from app.models.user import User
 from app.models.user_provider_credential import UserProviderCredential
-from app.providers import BankProvider
+from app.providers import BankProvider, is_provider_registered
 from app.providers.base import ProviderNotConfiguredError
 
 #: Providers a person can bring their own app keys for.
@@ -32,6 +37,36 @@ PERSONAL_CREDENTIAL_PROVIDERS = frozenset({"pluggy"})
 
 #: Key in BankConnection.credentials naming the personal app that made it.
 PERSONAL_CLIENT_ID_KEY = "personal_client_id"
+
+#: Error detail the client recognises to open the keys dialog.
+PERSONAL_CREDENTIALS_REQUIRED = "personal_credentials_required"
+
+
+class PersonalCredentialsRequiredError(ValueError):
+    """This person has to save their own keys before connecting a bank.
+
+    A ValueError so the connect-token route answers 400 with this detail,
+    like any other request it can't serve.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(PERSONAL_CREDENTIALS_REQUIRED)
+
+
+def must_bring_own_keys(provider_name: str, user: Optional[User]) -> bool:
+    """Whether this person may not fall back to the instance's keys."""
+    if provider_name not in PERSONAL_CREDENTIAL_PROVIDERS:
+        return False
+    if not get_settings().pluggy_instance_keys_admin_only:
+        return False
+    return not (user is not None and user.is_superuser)
+
+
+def instance_keys_usable_by(provider_name: str, user: Optional[User]) -> bool:
+    """Whether the instance has keys for this provider that this person may use."""
+    return is_provider_registered(provider_name) and not must_bring_own_keys(
+        provider_name, user
+    )
 
 
 async def get_credential(

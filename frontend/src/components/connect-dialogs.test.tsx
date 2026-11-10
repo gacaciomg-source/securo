@@ -1,13 +1,13 @@
-import { act, screen } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@/test/utils'
 import { ConnectorSelectDialog } from './connector-select-dialog'
 import { OAuthConnectDialog } from './oauth-connect-dialog'
 import { BankConnectDialog } from './bank-connect-dialog'
 
-const api = vi.hoisted(() => ({ getProviders: vi.fn(), listInstitutions: vi.fn(), getReconnectToken: vi.fn(), getConnectToken: vi.fn(), toastError: vi.fn() }))
-vi.mock('@/lib/api', () => ({ connections: api, auth: api }))
-vi.mock('sonner', () => ({ toast: { error: api.toastError } }))
+const api = vi.hoisted(() => ({ getProviders: vi.fn(), listInstitutions: vi.fn(), getReconnectToken: vi.fn(), getConnectToken: vi.fn(), get: vi.fn(), save: vi.fn(), toastError: vi.fn() }))
+vi.mock('@/lib/api', () => ({ connections: api, auth: api, providerCredentials: api }))
+vi.mock('sonner', () => ({ toast: { error: api.toastError, success: vi.fn() } }))
 vi.mock('react-pluggy-connect', () => ({ PluggyConnect: ({ connectToken }: { connectToken: string }) => <div>{connectToken}</div> }))
 
 beforeEach(() => { vi.resetAllMocks() })
@@ -34,6 +34,30 @@ it('warns a person without own Pluggy keys before using the shared account', asy
 
   expect(await screen.findByText(/shared Pluggy account/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Set up my keys' })).toBeInTheDocument()
+})
+
+it('asks for the keys when Pluggy is clicked without any, then carries on connecting', async () => {
+  const noKeys = { provider: 'pluggy', has_personal_credentials: false, client_id: null, instance_configured: false, connections_using: 0 }
+  api.getProviders.mockResolvedValue([
+    { name: 'pluggy', display_name: 'Pluggy', description: 'Synthetic', flow_type: 'widget', configured: false, has_personal_credentials: false },
+  ])
+  api.get.mockResolvedValue(noKeys)
+  api.save.mockResolvedValue({ ...noKeys, has_personal_credentials: true, client_id: 'abcdef123456' })
+  const onSelect = vi.fn()
+  const onClose = vi.fn()
+  const { user } = renderWithProviders(<ConnectorSelectDialog open onClose={onClose} onSelect={onSelect} />)
+
+  await user.click(await screen.findByText('Pluggy'))
+  expect(onSelect).not.toHaveBeenCalled()
+  expect(await screen.findByRole('link', { name: /dashboard\.pluggy\.ai/ })).toBeInTheDocument()
+  expect(screen.getByText(/MeuPluggy/)).toBeInTheDocument()
+
+  await user.type(screen.getByLabelText('Client ID'), 'abcdef123456')
+  await user.type(screen.getByLabelText('Client Secret'), 's3cret')
+  await user.click(screen.getByRole('button', { name: 'Check and save' }))
+
+  await waitFor(() => expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ name: 'pluggy', configured: true, has_personal_credentials: true })))
+  expect(onClose).toHaveBeenCalled()
 })
 
 it('does not warn once the person saved their own Pluggy keys', async () => {

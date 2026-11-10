@@ -1161,11 +1161,22 @@ async def _find_installment_source(
 async def _provider_for_user(
     session: AsyncSession, provider_name: str, user_id: uuid.UUID
 ) -> BankProvider:
-    """Provider for a new connection: the person's own keys, else the instance's."""
+    """Provider for a new connection: the person's own keys, else the instance's.
+
+    The instance's Pluggy keys are the server owner's account, so by default
+    only administrators fall back to them; anyone else gets
+    PersonalCredentialsRequiredError and the client asks for their keys.
+    """
     personal = await provider_credentials_service.personal_provider_for_user(
         session, provider_name, user_id
     )
-    return personal or get_provider(provider_name)
+    if personal:
+        return personal
+    if provider_name in provider_credentials_service.PERSONAL_CREDENTIAL_PROVIDERS:
+        user = await session.get(User, user_id)
+        if provider_credentials_service.must_bring_own_keys(provider_name, user):
+            raise provider_credentials_service.PersonalCredentialsRequiredError()
+    return get_provider(provider_name)
 
 
 async def _provider_for_connection(

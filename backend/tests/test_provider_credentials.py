@@ -19,6 +19,14 @@ from app.services import connection_service
 from app.services import provider_credentials_service as service
 
 
+@pytest.fixture(autouse=True)
+def _instance_keys_admin_only(monkeypatch):
+    """The rule this fork ships with: only administrators use the instance keys."""
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "pluggy_instance_keys_admin_only", True)
+
+
 def _rejected(status_code: int = 401) -> httpx.HTTPStatusError:
     request = httpx.Request("POST", "https://api.pluggy.ai/auth")
     return httpx.HTTPStatusError(
@@ -73,8 +81,30 @@ async def test_new_connection_uses_personal_keys(session, test_user):
 
 
 @pytest.mark.asyncio
-async def test_new_connection_falls_back_to_instance_keys(session, test_user):
+async def test_admin_falls_back_to_instance_keys(session, test_superuser):
     register_provider("pluggy", PluggyProvider)
+
+    provider = await connection_service._provider_for_user(session, "pluggy", test_superuser.id)
+
+    assert isinstance(provider, PluggyProvider)
+    assert not provider.uses_personal_credentials
+
+
+@pytest.mark.asyncio
+async def test_non_admin_without_keys_is_asked_for_their_own(session, test_user):
+    """The instance keys are the server owner's Meu Pluggy: not for everyone."""
+    register_provider("pluggy", PluggyProvider)
+
+    with pytest.raises(service.PersonalCredentialsRequiredError):
+        await connection_service._provider_for_user(session, "pluggy", test_user.id)
+
+
+@pytest.mark.asyncio
+async def test_instance_keys_can_be_shared_with_everyone(session, test_user, monkeypatch):
+    from app.core.config import get_settings
+
+    register_provider("pluggy", PluggyProvider)
+    monkeypatch.setattr(get_settings(), "pluggy_instance_keys_admin_only", False)
 
     provider = await connection_service._provider_for_user(session, "pluggy", test_user.id)
 
@@ -216,15 +246,56 @@ async def test_providers_list_counts_personal_keys(client, auth_headers, session
 
 
 @pytest.mark.asyncio
-async def test_providers_list_flags_people_on_the_shared_account(client, auth_headers):
-    """Instance keys alone: connectable, but the person has none of their own."""
+async def test_providers_list_flags_admins_on_the_shared_account(client, admin_auth_headers):
+    """Instance keys alone: an admin can connect, but has no keys of their own."""
+    register_provider("pluggy", PluggyProvider)
+
+    r = await client.get("/api/connections/providers", headers=admin_auth_headers)
+
+    pluggy = next(p for p in r.json()["providers"] if p["name"] == "pluggy")
+    assert pluggy["configured"] is True
+    assert pluggy["has_personal_credentials"] is False
+
+
+@pytest.mark.asyncio
+async def test_providers_list_needs_keys_for_everyone_else(client, auth_headers):
+    """Instance keys exist, but a non-admin may not use them."""
     register_provider("pluggy", PluggyProvider)
 
     r = await client.get("/api/connections/providers", headers=auth_headers)
 
     pluggy = next(p for p in r.json()["providers"] if p["name"] == "pluggy")
-    assert pluggy["configured"] is True
+    assert pluggy["configured"] is False
     assert pluggy["has_personal_credentials"] is False
+
+
+@pytest.mark.asyncio
+async def test_credential_status_says_who_may_use_the_instance_keys(
+    client, auth_headers, admin_auth_headers
+):
+    register_provider("pluggy", PluggyProvider)
+
+    member = await client.get("/api/provider-credentials/pluggy", headers=auth_headers)
+    admin = await client.get("/api/provider-credentials/pluggy", headers=admin_auth_headers)
+
+    assert member.json()["instance_configured"] is False
+    assert admin.json()["instance_configured"] is True
+
+
+@pytest.mark.asyncio
+async def test_connect_token_asks_non_admins_for_their_keys(
+    client, auth_headers, test_workspace
+):
+    register_provider("pluggy", PluggyProvider)
+
+    r = await client.post(
+        "/api/connections/connect-token",
+        json={"provider": "pluggy"},
+        headers={**auth_headers, "X-Workspace-Id": str(test_workspace.id)},
+    )
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == service.PERSONAL_CREDENTIALS_REQUIRED
 
 
 @pytest.mark.asyncio

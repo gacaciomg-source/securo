@@ -47,16 +47,24 @@ async def get_available_providers(
     saved keys of their own for it, and `has_personal_credentials` says
     whether they did: when only the instance's keys exist, the client
     warns that connecting goes through the shared account, which the free
-    Meu Pluggy plan only allows for the account holder's own banks.
+    Meu Pluggy plan only allows for the account holder's own banks. Someone
+    who may not use the instance's keys (not an administrator, by default)
+    sees Pluggy as not configured until they save their own.
     """
     personal: set[str] = set()
+    unavailable: set[str] = set()
     if user is not None:
         personal = await provider_credentials_service.personal_providers_for_user(
             session, user.id
         )
+        unavailable = {
+            name
+            for name in provider_credentials_service.PERSONAL_CREDENTIAL_PROVIDERS
+            if not provider_credentials_service.instance_keys_usable_by(name, user)
+        }
     providers = [
         {**p, "has_personal_credentials": p["name"] in personal}
-        for p in all_known_providers(personal)
+        for p in all_known_providers(personal, unavailable)
     ]
     return {"providers": providers}
 
