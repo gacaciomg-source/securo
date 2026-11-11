@@ -50,6 +50,8 @@ from app.services.asset_group_service import (
     _unique_default_name,
     ensure_group_for_connection,
 )
+from app.services.category_defaults import DEFAULT_CATEGORIES, name_variants
+from app.services.provider_categories import pluggy_category_key
 from app.services.credit_card_service import apply_effective_date
 from app.services.rule_engine import merge_notes
 from app.services.rule_service import apply_rules_to_transaction, preview_rules_for_transaction
@@ -213,32 +215,6 @@ async def _resolve_institution(
             inst.logo_url = new_logo
     cache[key] = inst
     return inst
-
-PLUGGY_CATEGORY_MAP = {
-    "Eating out": "Alimentação",
-    "Restaurants": "Alimentação",
-    "Food": "Alimentação",
-    "Groceries": "Mercado",
-    "Supermarkets": "Mercado",
-    "Pharmacy": "Saúde",
-    "Health": "Saúde",
-    "Taxi and ride-hailing": "Transporte",
-    "Transport": "Transporte",
-    "Gas": "Transporte",
-    "Travel": "Transporte",
-    "Housing": "Moradia",
-    "Rent": "Moradia",
-    "Utilities": "Moradia",
-    "Entertainment": "Lazer",
-    "Leisure": "Lazer",
-    "Education": "Educação",
-    "Subscriptions": "Assinaturas",
-    "Online services": "Assinaturas",
-    "Transfer": "Transferências",
-    "Transfers": "Transferências",
-    "Wire transfers": "Transferências",
-}
-
 
 def _sync_assets_enabled(settings: Optional[dict]) -> bool:
     """Return whether provider investment holdings should sync for a connection.
@@ -1046,21 +1022,22 @@ async def _match_pluggy_category(
     # admin setting. Off = sync skips the provider->user category mapping
     # entirely so transactions arrive uncategorized and Rules are the only
     # source of truth. Default keeps the historical behavior.
-    if not enabled or not pluggy_category:
+    if not enabled:
         return None
-    # Try exact match first, then prefix before " - " (e.g. "Transfer - PIX" → "Transfer")
-    app_name = PLUGGY_CATEGORY_MAP.get(pluggy_category)
-    if not app_name and " - " in pluggy_category:
-        app_name = PLUGGY_CATEGORY_MAP.get(pluggy_category.split(" - ")[0])
-    if not app_name:
+    key = pluggy_category_key(pluggy_category)
+    if key is None or key not in DEFAULT_CATEGORIES:
         return None
-    # Scope to the connection's workspace: a user in multiple workspaces owns
-    # the same default category names in each, so a user_id-only lookup returns
-    # several rows. `.first()` is belt-and-suspenders — a category match must
-    # never crash the whole sync even if a workspace somehow has name dupes.
+    # Any language's name for that default category: the workspace may have
+    # been seeded in English, Portuguese or anything else, or renamed since
+    # through an alias. Scope to the connection's workspace: a user in several
+    # workspaces owns the same default names in each. `.first()` is
+    # belt-and-suspenders, a match must never crash the whole sync.
     result = await session.execute(
         select(Category.id)
-        .where(Category.workspace_id == workspace_id, Category.name == app_name)
+        .where(
+            Category.workspace_id == workspace_id,
+            Category.name.in_(name_variants(DEFAULT_CATEGORIES[key])),
+        )
         .limit(1)
     )
     return result.scalars().first()

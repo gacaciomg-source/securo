@@ -307,7 +307,7 @@ async def get_date_format(session: AsyncSession) -> str:
 
 async def use_provider_categories(session: AsyncSession) -> bool:
     """Whether sync should map provider-supplied categories (e.g. Pluggy's
-    `category` field) onto the user's seeded categories via PLUGGY_CATEGORY_MAP.
+    `category` field) onto the user's seeded categories via PLUGGY_CATEGORY_KEYS.
 
     Global app setting — affects every connection's sync. Defaults to True
     (preserves current behavior). Admins can flip it off when the provider's

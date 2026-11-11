@@ -569,6 +569,12 @@ export const accounts = {
     const { data } = await api.get(`/accounts/${id}/bills`, { params: { limit } })
     return data
   },
+  setBillPaid: async (id: string, billId: string, paid: boolean): Promise<CreditCardBill> => {
+    const { data } = paid
+      ? await api.post(`/accounts/${id}/bills/${billId}/paid`)
+      : await api.delete(`/accounts/${id}/bills/${billId}/paid`)
+    return data
+  },
   close: async (id: string): Promise<Account> => {
     const { data } = await api.post(`/accounts/${id}/close`)
     return data

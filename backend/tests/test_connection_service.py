@@ -236,6 +236,75 @@ async def test_match_pluggy_user_has_no_category(session: AsyncSession, test_wor
     assert cat_id is None
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "pluggy_category",
+    ["Credit card payment", "Same person transfer - PIX", "Same person transfer"],
+)
+async def test_match_pluggy_bill_payments_and_own_transfers_are_transfers(
+    session: AsyncSession, test_user, test_workspace, pluggy_category
+):
+    """Paying the card bill or moving money between one's own accounts must
+    land in the transfer category, or it counts as income on one side and
+    spending on the other."""
+    transfers = await _make_category(session, test_user.id, "Transferências")
+    await _make_category(session, test_user.id, "Outros")
+
+    cat_id = await _match_pluggy_category(session, test_workspace.id, pluggy_category)
+
+    assert cat_id == transfers.id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("pluggy_category", "expected"),
+    [
+        ("Pharmacy", "Saúde"),
+        ("Gas stations", "Transporte"),
+        ("Gas", "Moradia"),
+        ("Food delivery", "Alimentação"),
+        ("Taxi/ride-hailing", "Transporte"),
+        ("Video streaming", "Assinaturas"),
+    ],
+)
+async def test_match_pluggy_covers_the_full_taxonomy(
+    session: AsyncSession, test_user, test_workspace, pluggy_category, expected
+):
+    created = {
+        name: await _make_category(session, test_user.id, name)
+        for name in ("Saúde", "Transporte", "Moradia", "Alimentação", "Assinaturas")
+    }
+
+    cat_id = await _match_pluggy_category(session, test_workspace.id, pluggy_category)
+
+    assert cat_id == created[expected].id
+
+
+@pytest.mark.asyncio
+async def test_match_pluggy_works_for_english_workspaces(
+    session: AsyncSession, test_user, test_workspace
+):
+    """The map points at default-category keys, not Portuguese names, so a
+    workspace seeded in English matches too."""
+    food = await _make_category(session, test_user.id, "Food & Dining")
+
+    cat_id = await _match_pluggy_category(session, test_workspace.id, "Eating out")
+
+    assert cat_id == food.id
+
+
+@pytest.mark.asyncio
+async def test_match_pluggy_leaves_third_party_transfers_uncategorized(
+    session: AsyncSession, test_user, test_workspace
+):
+    """A PIX to someone else is spending, not a transfer between own accounts."""
+    await _make_category(session, test_user.id, "Transferências")
+
+    cat_id = await _match_pluggy_category(session, test_workspace.id, "PIX")
+
+    assert cat_id is None
+
+
 # ---------------------------------------------------------------------------
 # get_connections / get_connection
 # ---------------------------------------------------------------------------

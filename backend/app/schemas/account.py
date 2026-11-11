@@ -132,6 +132,12 @@ class CreditCardBillRead(BaseModel):
     total_amount: float
     currency: str
     minimum_payment: Optional[float] = None
+    # Where the bill stands (see bill_status_service): open, closed,
+    # partial, overdue or paid. Filled by the bills endpoints.
+    status: str = "open"
+    paid_amount: float = 0.0
+    paid_manually: bool = False
+    close_date: Optional[date] = None
 
     model_config = ConfigDict(from_attributes=True)
 

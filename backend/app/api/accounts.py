@@ -25,7 +25,7 @@ from app.schemas.account import (
     AccountUpdate,
     CreditCardBillRead,
 )
-from app.services import account_service
+from app.services import account_service, bill_status_service
 from app.services.admin_service import get_credit_card_accounting_mode
 from app.services.fx_rate_service import _resolve_rate
 
@@ -190,7 +190,60 @@ async def get_account_bills(
     )
     if bills is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
-    return bills
+    if not bills:
+        return []
+    account = await account_service.get_account(session, account_id, ctx.workspace.id)
+    statuses = await bill_status_service.bill_statuses(session, account, bills)
+    return [_bill_read(bill, statuses[bill.id]) for bill in bills]
+
+
+def _bill_read(bill, bill_status: bill_status_service.BillStatus) -> CreditCardBillRead:
+    return CreditCardBillRead.model_validate(bill).model_copy(
+        update={
+            "status": bill_status.status,
+            "paid_amount": float(bill_status.paid_amount),
+            "paid_manually": bill_status.paid_manually,
+            "close_date": bill_status.close_date,
+        }
+    )
+
+
+async def _set_bill_paid(
+    session: AsyncSession, ctx: WorkspaceContext, account_id: uuid.UUID, bill_id: uuid.UUID, paid: bool
+) -> CreditCardBillRead:
+    account = await account_service.get_account(session, account_id, ctx.workspace.id)
+    if account is None or account.type != "credit_card":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
+    bill = await bill_status_service.set_bill_paid(session, account, bill_id, paid)
+    if bill is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bill not found")
+    bills = await account_service.get_credit_card_bills(session, account_id, ctx.workspace.id, limit=200)
+    statuses = await bill_status_service.bill_statuses(session, account, bills or [bill])
+    return _bill_read(bill, statuses[bill.id])
+
+
+@router.post("/{account_id}/bills/{bill_id}/paid", response_model=CreditCardBillRead)
+async def mark_bill_paid(
+    account_id: uuid.UUID,
+    bill_id: uuid.UUID,
+    ctx: WorkspaceContext = Depends(current_writable_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    """Mark a bill paid by hand, for a payment the card cannot see (made from
+    an account that is not connected, or that did not match on its own)."""
+    return await _set_bill_paid(session, ctx, account_id, bill_id, True)
+
+
+@router.delete("/{account_id}/bills/{bill_id}/paid", response_model=CreditCardBillRead)
+async def unmark_bill_paid(
+    account_id: uuid.UUID,
+    bill_id: uuid.UUID,
+    ctx: WorkspaceContext = Depends(current_writable_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    """Take back a manual paid mark; the status goes back to what the
+    payments say."""
+    return await _set_bill_paid(session, ctx, account_id, bill_id, False)
 
 
 @router.get("/{account_id}/loan-schedule", response_model=LoanScheduleRead)

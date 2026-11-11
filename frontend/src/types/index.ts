@@ -226,7 +226,14 @@ export interface CreditCardBill {
   total_amount: number
   currency: string
   minimum_payment: number | null
+  /** open: still collecting purchases; closed: waiting for payment. */
+  status?: BillStatus
+  paid_amount?: number
+  paid_manually?: boolean
+  close_date?: string | null
 }
+
+export type BillStatus = 'open' | 'closed' | 'partial' | 'overdue' | 'paid'
 
 export interface Collection {
   id: string

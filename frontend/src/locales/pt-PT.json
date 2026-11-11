@@ -3217,5 +3217,27 @@
     "setUp": "Configurar minhas chaves",
     "needKeys": "Salve suas chaves do Meu Pluggy para conectar seus bancos.",
     "sharedAccountWarning": "Isso vai usar a conta Pluggy compartilhada do servidor. Se seus bancos estão em outro CPF, configure suas chaves antes."
+  },
+  "bills": {
+    "status": {
+      "open": "Aberta",
+      "closed": "Fechada",
+      "partial": "Paga em parte",
+      "overdue": "Vencida",
+      "paid": "Paga"
+    },
+    "detail": {
+      "open": "Ainda recebendo compras até fechar.",
+      "closed": "Fechada, esperando pagamento.",
+      "partial": "Uma parte foi paga.",
+      "overdue": "Passou do vencimento e não foi paga.",
+      "paid": "Paga. Não falta nada nesta fatura."
+    },
+    "detailPartial": "{{paid}} de {{total}} pagos.",
+    "detailManual": "Marcada como paga manualmente.",
+    "markPaid": "Marcar como paga",
+    "unmarkPaid": "Desfazer",
+    "markedPaid": "Fatura marcada como paga.",
+    "unmarkedPaid": "Marcação desfeita."
   }
 }

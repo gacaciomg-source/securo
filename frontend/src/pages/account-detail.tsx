@@ -26,6 +26,7 @@ import { ProjectedTransactionBadge } from '@/components/projected-transaction-ba
 import { TransactionDialog, type TransactionSavePayload } from '@/components/transaction-dialog'
 import { extractApiError } from '@/lib/api-errors'
 import { TransferDialog } from '@/components/transfer-dialog'
+import { BillStatusPanel } from '@/components/bill-status'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -1276,7 +1277,11 @@ export default function AccountDetailPage() {
           : previousCycle
             ? creditCardCycleLabel(previousCycle.end, account.payment_due_day, i18n.language)
             : null
+        // The bill on screen: the one picked, else the synced bill this
+        // cycle closes into.
+        const statusBill = activeBill ?? (cycleDueDate ? billsAsc.find(b => b.due_date === cycleDueDate) : undefined)
         return (
+          <>
           <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
             <div className="bg-card rounded-xl border border-border shadow-sm p-3 sm:p-4 overflow-hidden">
               <p className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 truncate">
@@ -1318,6 +1323,10 @@ export default function AccountDetailPage() {
               )}
             </div>
           </div>
+          {statusBill && (
+            <BillStatusPanel accountId={account.id} bill={statusBill} locale={locale} canWrite={canWrite && !account.is_closed} />
+          )}
+          </>
         )
       })() : (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">

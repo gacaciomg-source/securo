@@ -2,6 +2,7 @@
  "anon": {
   "DELETE /api/access-tokens/{token_id}": 401,
   "DELETE /api/accounts/{account_id}": 401,
+  "DELETE /api/accounts/{account_id}/bills/{bill_id}/paid": 401,
   "DELETE /api/admin/settings/{key}": 401,
   "DELETE /api/admin/users/{user_id}": 401,
   "DELETE /api/agents/connections/{conn_id}": 401,
@@ -234,6 +235,7 @@
   "PATCH /api/workspaces/{workspace_id}/members/{member_user_id}": 401,
   "POST /api/access-tokens": 401,
   "POST /api/accounts": 401,
+  "POST /api/accounts/{account_id}/bills/{bill_id}/paid": 401,
   "POST /api/accounts/{account_id}/close": 401,
   "POST /api/accounts/{account_id}/loan-balance": 401,
   "POST /api/accounts/{account_id}/reopen": 401,
@@ -418,6 +420,7 @@
  "ok": {
   "DELETE /api/access-tokens/{token_id}": 404,
   "DELETE /api/accounts/{account_id}": 204,
+  "DELETE /api/accounts/{account_id}/bills/{bill_id}/paid": 404,
   "DELETE /api/admin/settings/{key}": 204,
   "DELETE /api/admin/users/{user_id}": 204,
   "DELETE /api/agents/connections/{conn_id}": 204,
@@ -648,6 +651,7 @@
   "PATCH /api/workspaces/{workspace_id}/members/{member_user_id}": 400,
   "POST /api/access-tokens": 422,
   "POST /api/accounts": 201,
+  "POST /api/accounts/{account_id}/bills/{bill_id}/paid": 404,
   "POST /api/accounts/{account_id}/close": 200,
   "POST /api/accounts/{account_id}/loan-balance": 200,
   "POST /api/accounts/{account_id}/reopen": 400,
@@ -758,6 +762,7 @@
  "unknown_id": {
   "DELETE /api/access-tokens/{token_id}": 404,
   "DELETE /api/accounts/{account_id}": 404,
+  "DELETE /api/accounts/{account_id}/bills/{bill_id}/paid": 404,
   "DELETE /api/admin/users/{user_id}": 404,
   "DELETE /api/agents/connections/{conn_id}": 404,
   "DELETE /api/agents/conversations/{conversation_id}": 404,
@@ -881,6 +886,7 @@
   "PATCH /api/users/{id}": 403,
   "PATCH /api/workspaces/{workspace_id}": 404,
   "PATCH /api/workspaces/{workspace_id}/members/{member_user_id}": 404,
+  "POST /api/accounts/{account_id}/bills/{bill_id}/paid": 404,
   "POST /api/accounts/{account_id}/close": 404,
   "POST /api/accounts/{account_id}/loan-balance": 404,
   "POST /api/accounts/{account_id}/reopen": 404,
@@ -926,6 +932,7 @@
  "viewer": {
   "DELETE /api/access-tokens/{token_id}": 404,
   "DELETE /api/accounts/{account_id}": 403,
+  "DELETE /api/accounts/{account_id}/bills/{bill_id}/paid": 403,
   "DELETE /api/agents/connections/{conn_id}": 404,
   "DELETE /api/agents/conversations/{conversation_id}": 403,
   "DELETE /api/agents/{agent_id}": 403,
@@ -1011,6 +1018,7 @@
   "PATCH /api/workspaces/{workspace_id}/members/{member_user_id}": 403,
   "POST /api/access-tokens": 422,
   "POST /api/accounts": 403,
+  "POST /api/accounts/{account_id}/bills/{bill_id}/paid": 403,
   "POST /api/accounts/{account_id}/close": 403,
   "POST /api/accounts/{account_id}/loan-balance": 403,
   "POST /api/accounts/{account_id}/reopen": 403,

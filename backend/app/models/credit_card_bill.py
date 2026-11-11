@@ -40,6 +40,12 @@ class CreditCardBill(Base):
     currency: Mapped[str] = mapped_column(String(3), default="BRL")
     minimum_payment: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=15, scale=2), nullable=True)
     raw_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    # Set when someone marks the bill paid by hand: the payment came from an
+    # account that is not connected, or it did not match on its own. Wins
+    # over whatever the payments found (see bill_status_service).
+    paid_manually_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
