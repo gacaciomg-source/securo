@@ -3,7 +3,7 @@ import { AccountIcon } from '@/components/account-icon'
 import { CategorySplitBadge, TransactionCategoryIcon } from '@/components/category-lines-display'
 import { isSplitByCategory } from '@/lib/category-lines'
 import type { Transaction, Account } from '@/types'
-import { AlertTriangle, ArrowLeftRight, CalendarClock, ChartNoAxesColumn, Clock, EyeClosed, Paperclip } from 'lucide-react'
+import { AlertTriangle, ArrowLeftRight, ArrowRight, CalendarClock, ChartNoAxesColumn, Clock, EyeClosed, Paperclip } from 'lucide-react'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '@/lib/format'
@@ -61,6 +61,7 @@ export function MobileTransactionRow({
     ? Number(tx.viewer_share)
     : Number(tx.amount)
 
+  const noteText = tx.notes ? tx.notes.replace(/#[\wÀ-ž-]+/g, '').trim() : ''
   const amountColor = tx.is_ignored
     ? 'text-gray-500'
     : tx.type === 'credit'
@@ -170,14 +171,23 @@ export function MobileTransactionRow({
           ) : null
         ) : (
           account && (
+            // A transfer reads in the direction the money went: from → to.
             <div className="flex items-center gap-1.5 mt-0.5">
               <AccountIcon account={account} size="xs" />
+              {tx.transfer_counterpart && tx.type === 'credit' && (
+                <>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {tx.transfer_counterpart.account_name}
+                  </span>
+                  <ArrowRight className="h-3 w-3 text-blue-600 shrink-0" aria-label={t('transactions.transferArrow')} />
+                </>
+              )}
               <span className="text-xs text-muted-foreground truncate">
                 {getAccountName(account)}
               </span>
-              {tx.transfer_counterpart && (
+              {tx.transfer_counterpart && tx.type !== 'credit' && (
                 <>
-                  <ArrowLeftRight className="h-3 w-3 text-blue-600 shrink-0" aria-hidden="true" />
+                  <ArrowRight className="h-3 w-3 text-blue-600 shrink-0" aria-label={t('transactions.transferArrow')} />
                   <span className="text-xs text-muted-foreground truncate">
                     {tx.transfer_counterpart.account_name}
                   </span>
@@ -185,6 +195,11 @@ export function MobileTransactionRow({
               )}
             </div>
           )
+        )}
+        {/* What the person wrote about it, like a caption. Hashtags are
+            tags, shown elsewhere, so they stay out of the sentence. */}
+        {noteText && (
+          <p className="mt-0.5 truncate text-xs italic text-muted-foreground">{noteText}</p>
         )}
       </div>
 

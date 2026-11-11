@@ -1203,7 +1203,12 @@ export default function TransactionsPage() {
             {isTransferTransaction(tx) && (
               <span className="inline-flex max-w-full items-center gap-1 overflow-hidden text-[10px] font-semibold uppercase tracking-wide text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full">
                 <ArrowLeftRight className="h-3 w-3 shrink-0" />
-                <span className="shrink-0">{t('transactions.transfer')}</span>
+                {/* Says which way the money went, not just that it moved. */}
+                <span className="shrink-0">
+                  {tx.transfer_counterpart
+                    ? t(tx.type === 'debit' ? 'transactions.transferTo' : 'transactions.transferFrom')
+                    : t('transactions.transfer')}
+                </span>
                 {tx.transfer_counterpart && (
                   <Link
                     to={`/accounts/${tx.transfer_counterpart.account_id}`}

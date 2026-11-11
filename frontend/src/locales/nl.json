@@ -1177,7 +1177,10 @@
     "invoiceBadgeTooltip": "Deze transactie rekent een factuur af. Openen.",
     "suggestionBadge": "Vraag",
     "suggestionBadgeTooltip": "Een betaling kan deze factuur voldoen. Open de wachtrij om te antwoorden.",
-    "clearGroupFilter": "Groepsfilter wissen"
+    "clearGroupFilter": "Groepsfilter wissen",
+    "transferTo": "Transfer to",
+    "transferFrom": "Transfer from",
+    "transferArrow": "to"
   },
   "accounts": {
     "title": "Rekeningen",

@@ -1191,7 +1191,10 @@
     "invoiceBadgeTooltip": "Эта операция закрывает счёт. Открыть.",
     "suggestionBadge": "Вопрос",
     "suggestionBadgeTooltip": "Платёж может закрыть этот счёт. Откройте очередь, чтобы ответить.",
-    "clearGroupFilter": "Сбросить фильтр группы"
+    "clearGroupFilter": "Сбросить фильтр группы",
+    "transferTo": "Transfer to",
+    "transferFrom": "Transfer from",
+    "transferArrow": "to"
   },
   "accounts": {
     "title": "Счета",

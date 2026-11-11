@@ -1245,7 +1245,10 @@
     "invoiceBadgeTooltip": "Tato transakce vyrovnává fakturu. Otevřete ji.",
     "suggestionBadge": "Otázka",
     "suggestionBadgeTooltip": "Platba může uhradit tuto fakturu. Otevřete frontu a odpovězte.",
-    "clearGroupFilter": "Zrušit filtr skupiny"
+    "clearGroupFilter": "Zrušit filtr skupiny",
+    "transferTo": "Transfer to",
+    "transferFrom": "Transfer from",
+    "transferArrow": "to"
   },
   "accounts": {
     "title": "Účty",

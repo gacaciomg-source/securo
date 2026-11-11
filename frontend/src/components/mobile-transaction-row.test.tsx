@@ -131,3 +131,34 @@ describe('MobileTransactionRow transfer indicator', () => {
     expect(screen.queryByLabelText('transactions.transfer')).not.toBeInTheDocument()
   })
 })
+
+describe('MobileTransactionRow caption and transfer direction', () => {
+  it('shows what the person wrote as a caption, without the hashtags', () => {
+    renderRow(makeTx({ notes: 'Remédio da alergia #saude' }))
+
+    expect(screen.getByText('Remédio da alergia')).toBeInTheDocument()
+  })
+
+  it('reads an outgoing transfer from this account to the other', () => {
+    renderRow(makeTx({
+      type: 'debit',
+      transfer_pair_id: 'pair-1',
+      transfer_counterpart: { account_id: 'acc-2', account_name: 'Savings' },
+    }))
+
+    const arrow = screen.getByLabelText('transactions.transferArrow')
+    expect(arrow.previousElementSibling?.textContent).not.toBe('Savings')
+    expect(arrow.nextElementSibling?.textContent).toBe('Savings')
+  })
+
+  it('reads an incoming transfer from the other account to this one', () => {
+    renderRow(makeTx({
+      type: 'credit',
+      transfer_pair_id: 'pair-1',
+      transfer_counterpart: { account_id: 'acc-2', account_name: 'Savings' },
+    }))
+
+    const arrow = screen.getByLabelText('transactions.transferArrow')
+    expect(arrow.previousElementSibling?.textContent).toBe('Savings')
+  })
+})

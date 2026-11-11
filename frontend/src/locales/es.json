@@ -1179,7 +1179,10 @@
     "invoiceBadgeTooltip": "Esta transacción salda una factura. Ábrela.",
     "suggestionBadge": "Pregunta",
     "suggestionBadgeTooltip": "Un pago puede saldar esta factura. Abre la cola para responder.",
-    "clearGroupFilter": "Quitar filtro de grupo"
+    "clearGroupFilter": "Quitar filtro de grupo",
+    "transferTo": "Transfer to",
+    "transferFrom": "Transfer from",
+    "transferArrow": "to"
   },
   "accounts": {
     "title": "Cuentas",
