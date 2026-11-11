@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ShellLogo } from '@/components/shell-logo'
 
-// Left-hand brand panel for the auth/onboarding screens. A deep indigo→violet
+// Left-hand brand panel for the auth/onboarding screens. A deep green
 // field with a slow purple aurora drifting behind an oversized, translucent
 // shell watermark. Decorative only — hidden below `lg`, where the form takes
 // the full width and carries its own compact header.
@@ -13,7 +13,7 @@ export function AuthBrandPanel() {
       className="relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col lg:justify-between"
       style={{
         background:
-          'linear-gradient(150deg, #3F37C9 0%, #5B30C9 48%, #6D28D9 100%)',
+          'linear-gradient(150deg, #0B3D1B 0%, #106B2C 48%, #15803D 100%)',
       }}
     >
       {/* Soft animated aurora */}
@@ -38,7 +38,7 @@ export function AuthBrandPanel() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(115% 90% at 78% 8%, transparent 42%, rgba(20, 12, 60, 0.38) 100%)',
+            'radial-gradient(115% 90% at 78% 8%, transparent 42%, rgba(4, 30, 12, 0.38) 100%)',
         }}
       />
 

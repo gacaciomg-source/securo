@@ -204,6 +204,8 @@ export interface Account {
   payment_due_day: number | null
   next_close_date: string | null
   next_due_date: string | null
+  /** Shared by the household: shows under "together", not under whoever connected it. */
+  is_joint?: boolean
   minimum_payment: number | null
   card_brand: string | null
   card_level: string | null

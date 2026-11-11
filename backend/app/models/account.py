@@ -73,6 +73,10 @@ class Account(Base):
         UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="SET NULL"),
         nullable=True, index=True,
     )
+    # Shared by the household (a joint bank account, the house account).
+    # Everyday views filter by person, and a joint account belongs to the
+    # "together" view rather than to whoever happened to connect it.
+    is_joint: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     is_closed: Mapped[bool] = mapped_column(Boolean, default=False)
     closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 

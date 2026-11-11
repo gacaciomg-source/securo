@@ -109,9 +109,9 @@
   },
   "nav": {
     "dashboard": "Painel",
-    "transactions": "Transações",
+    "transactions": "Extrato",
     "invoices": "Cobranças",
-    "accounts": "Contas",
+    "accounts": "Contas e cartões",
     "collections": "Coleções",
     "import": "Importar",
     "rules": "Regras",
@@ -120,20 +120,23 @@
     "settings": "Configurações",
     "recurring": "Recorrentes",
     "assets": "Patrimônio",
-    "payees": "Pessoas",
-    "splitGroups": "Grupos",
+    "payees": "Lojas e pessoas",
+    "splitGroups": "Dividir gastos",
     "goals": "Metas",
     "reports": "Relatórios",
     "groupAnalysis": "Análise",
-    "groupSetup": "Configuração",
-    "groupAccounts": "Contas",
+    "groupSetup": "Organizar",
+    "groupAccounts": "Dia a dia",
     "groupAdmin": "Administração",
     "groupAgents": "IA",
     "agents": "Agentes",
     "aiAgents": "Agentes IA",
     "documentation": "Documentação",
     "collapseSidebar": "Recolher barra lateral",
-    "expandSidebar": "Expandir barra lateral"
+    "expandSidebar": "Expandir barra lateral",
+    "groupPlan": "Planejar",
+    "more": "Mais",
+    "bottomNav": "Navegação principal"
   },
   "invoices": {
     "title": "Cobranças",
@@ -1364,7 +1367,9 @@
       "active": "Ativa",
       "error": "Erro",
       "expired": "Expirada"
-    }
+    },
+    "jointLabel": "Conta conjunta",
+    "jointHint": "Usada pelo casal ou pela família, como a conta da casa. No painel ela aparece em \"Conjunto\", e não em nome de uma pessoa só."
   },
   "loans": {
     "title": "Contrato do empréstimo",
@@ -3239,5 +3244,56 @@
     "unmarkPaid": "Desfazer",
     "markedPaid": "Fatura marcada como paga.",
     "unmarkedPaid": "Marcação desfeita."
+  },
+  "home": {
+    "hello": "Olá, {{name}}",
+    "title": "Painel",
+    "fullDashboard": "Painel completo",
+    "addEntry": "Lançamento",
+    "whoseMoney": "De quem é o dinheiro",
+    "everyone": "Todos",
+    "together": "Conjunto",
+    "period": {
+      "month": "Mês",
+      "3m": "3 meses",
+      "6m": "6 meses",
+      "12m": "12 meses"
+    },
+    "previous": "Mês anterior",
+    "next": "Próximo mês",
+    "income": "Entradas",
+    "expenses": "Saídas",
+    "leftOver": "Sobrou",
+    "shortBy": "Faltou",
+    "spentShare": "{{pct}}% das entradas foram gastas",
+    "incomeMinusExpenses": "entradas menos saídas",
+    "inAccounts": "Saldo em conta",
+    "inAccountsHint": "o que tem nas contas hoje, sem o cartão",
+    "vsBefore": "vs. período anterior",
+    "cards": "Cartões de crédito",
+    "cardDue": "Vence {{date}}",
+    "cardNoDue": "Sem vencimento cadastrado",
+    "toPay": "a pagar",
+    "byMonth": "Entradas e saídas por mês",
+    "fadedMonths": "Meses mais claros: fora do período escolhido, só para comparar.",
+    "noAccountsHere": "Ainda não há contas aqui.",
+    "whereItWent": "Para onde foi o dinheiro",
+    "whereItWentHint": "Toque numa categoria para ver os lançamentos.",
+    "noSpending": "Nenhuma saída neste período.",
+    "uncategorized": "Sem categoria",
+    "latest": "Últimos lançamentos",
+    "seeAll": "Ver todos",
+    "nothingYet": "Nada por aqui ainda.",
+    "transferFromTo": "Transferência: {{from}} → {{to}}"
+  },
+  "profileName": {
+    "menu": "Meu nome",
+    "title": "Seu nome",
+    "description": "Como a família vê você no painel e ao lado dos seus lançamentos.",
+    "label": "Nome",
+    "placeholder": "Seu nome",
+    "prompt": "Como podemos te chamar? Seu nome aparece para a família.",
+    "saved": "Nome salvo.",
+    "error": "Não deu para salvar o nome. Tente de novo."
   }
 }

@@ -133,7 +133,10 @@
     "aiAgents": "ИИ-агенты",
     "documentation": "Документация",
     "collapseSidebar": "Свернуть боковую панель",
-    "expandSidebar": "Развернуть боковую панель"
+    "expandSidebar": "Развернуть боковую панель",
+    "groupPlan": "Plan",
+    "more": "More",
+    "bottomNav": "Main navigation"
   },
   "invoices": {
     "title": "Invoices",
@@ -1377,7 +1380,9 @@
       "active": "Активно",
       "error": "Ошибка",
       "expired": "Истекло"
-    }
+    },
+    "jointLabel": "Joint account",
+    "jointHint": "Shared by the household, like the house account. It shows under \"Together\" on the overview instead of under one person."
   },
   "loans": {
     "title": "Кредитный договор",
@@ -3264,5 +3269,56 @@
     "unmarkPaid": "Undo",
     "markedPaid": "Bill marked as paid.",
     "unmarkedPaid": "Mark removed."
+  },
+  "home": {
+    "hello": "Hi, {{name}}",
+    "title": "Overview",
+    "fullDashboard": "Full dashboard",
+    "addEntry": "New entry",
+    "whoseMoney": "Whose money",
+    "everyone": "Everyone",
+    "together": "Together",
+    "period": {
+      "month": "Month",
+      "3m": "3 months",
+      "6m": "6 months",
+      "12m": "12 months"
+    },
+    "previous": "Previous month",
+    "next": "Next month",
+    "income": "Income",
+    "expenses": "Spending",
+    "leftOver": "Left over",
+    "shortBy": "Short by",
+    "spentShare": "{{pct}}% of the income was spent",
+    "incomeMinusExpenses": "income minus spending",
+    "inAccounts": "In the accounts",
+    "inAccountsHint": "what's in the accounts today, cards apart",
+    "vsBefore": "vs. the period before",
+    "cards": "Credit cards",
+    "cardDue": "Due {{date}}",
+    "cardNoDue": "No due date set",
+    "toPay": "to pay",
+    "byMonth": "Income and spending by month",
+    "fadedMonths": "Lighter months are outside the chosen period, just for comparison.",
+    "noAccountsHere": "No accounts here yet.",
+    "whereItWent": "Where the money went",
+    "whereItWentHint": "Tap a category to see its entries.",
+    "noSpending": "No spending in this period.",
+    "uncategorized": "Not categorized",
+    "latest": "Latest entries",
+    "seeAll": "See all",
+    "nothingYet": "Nothing here yet.",
+    "transferFromTo": "Transfer: {{from}} → {{to}}"
+  },
+  "profileName": {
+    "menu": "My name",
+    "title": "Your name",
+    "description": "How the household sees you on the overview and next to your entries.",
+    "label": "Name",
+    "placeholder": "Your name",
+    "prompt": "What should we call you? Your name shows up for the household.",
+    "saved": "Name saved.",
+    "error": "Couldn't save the name. Try again."
   }
 }

@@ -77,6 +77,20 @@ export function sumAccountsTotal(
 }
 
 /**
+ * Money actually in the accounts: everything but cards and loans. What the
+ * sidebar's "Accounts" header shows, so a card bill never reads as if it
+ * had been taken out of the balance already. Card debt has its own place
+ * (each card row and the dashboard's bill card).
+ */
+export function sumCashTotal(
+  accounts: readonly Pick<Account, 'type' | 'balance_primary' | 'current_balance' | 'shared_balance_group'>[],
+): number {
+  return sumAccountBalances(
+    accounts.filter((account) => account.type !== 'loan' && account.type !== 'credit_card'),
+  )
+}
+
+/**
  * Return a presentation-only copy ordered by the name users see.
  * The input is never mutated, which keeps React Query's cached account list intact.
  */

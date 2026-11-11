@@ -50,24 +50,24 @@ describe('nav catalog', () => {
 })
 
 describe('visibleNavItems', () => {
-  it('renders a personal workspace exactly as before modules existed', () => {
+  it('renders a personal workspace in household order', () => {
     const personal = visibleNavItems(navItems, (id) => PERSONAL_MODULES.includes(id))
     expect(linkKeys(personal)).toEqual([
       'transactions',
       'accounts',
-      'import',
+      'goals',
+      'budgets',
+      'recurring',
       'reports',
       'assets',
-      'budgets',
-      'goals',
-      'recurring',
       'categories',
+      'rules',
+      'import',
       'payees',
       'splitGroups',
-      'rules',
     ])
-    // All three section headers survive.
-    expect(personal.filter((i) => i.type === 'separator')).toHaveLength(3)
+    // All four section headers survive.
+    expect(personal.filter((i) => i.type === 'separator')).toHaveLength(4)
   })
 
   it('adds invoices for a workspace that has it', () => {

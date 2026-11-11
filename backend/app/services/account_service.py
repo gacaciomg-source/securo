@@ -347,6 +347,7 @@ def serialize_account(
         "current_balance": resolved_balance,
         "previous_balance": float(previous_balance or 0),
         "is_closed": acc.is_closed,
+        "is_joint": acc.is_joint,
         "closed_at": acc.closed_at,
         "credit_limit": float(acc.credit_limit) if acc.credit_limit is not None else None,
         "statement_close_day": acc.statement_close_day,
@@ -456,6 +457,7 @@ async def create_account(
         minimum_payment=data.minimum_payment if is_cc else None,
         card_brand=data.card_brand if is_cc else None,
         card_level=data.card_level if is_cc else None,
+        is_joint=data.is_joint,
         **{field: getattr(data, field) if data.type == "loan" else None for field in LOAN_TERM_FIELDS},
     )
     session.add(account)
@@ -554,6 +556,7 @@ async def update_account(
             "minimum_payment",
             "card_brand",
             "card_level",
+            "is_joint",
             *LOAN_TERM_FIELDS,
         }
         disallowed = set(update_data.keys()) - editable_fields
@@ -561,7 +564,7 @@ async def update_account(
             raise ValueError("Cannot edit bank-connected accounts")
         old_type = account.type
         new_type = update_data.get("type", account.type)
-        cc_fields = editable_fields - {"display_name", "type", "secured_asset_id", *LOAN_TERM_FIELDS}
+        cc_fields = editable_fields - {"display_name", "type", "secured_asset_id", "is_joint", *LOAN_TERM_FIELDS}
         cc_update = {k: v for k, v in update_data.items() if k in cc_fields}
         if cc_update and new_type != "credit_card":
             raise ValueError("Credit card fields can only be set on credit card accounts")

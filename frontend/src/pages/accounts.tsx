@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -773,6 +774,7 @@ export function AccountDialog({
     credit_limit?: number | null
     statement_close_day?: number | null
     payment_due_day?: number | null
+    is_joint?: boolean
   }) => void
   loading: boolean
 }) {
@@ -802,6 +804,7 @@ export function AccountDialog({
   const [statementCloseDay, setStatementCloseDay] = useState(account?.statement_close_day?.toString() ?? '')
   const [paymentDueDay, setPaymentDueDay] = useState(account?.payment_due_day?.toString() ?? '')
   const [securedAssetId, setSecuredAssetId] = useState(account?.secured_asset_id ?? '')
+  const [isJoint, setIsJoint] = useState(account?.is_joint ?? false)
   const [loanTerms, setLoanTerms] = useState(() => loanTermsFrom(account, account?.currency ?? userCurrency))
   // Opened by the user, not by the amount: clearing the amount must not collapse it.
   const [termsOpen, setTermsOpen] = useState(() => account?.loan_original_amount != null)
@@ -829,6 +832,7 @@ export function AccountDialog({
     setStatementCloseDay(account?.statement_close_day?.toString() ?? '')
     setPaymentDueDay(account?.payment_due_day?.toString() ?? '')
     setSecuredAssetId(account?.secured_asset_id ?? '')
+    setIsJoint(account?.is_joint ?? false)
     setLoanTerms(loanTermsFrom(account, account?.currency ?? userCurrency))
     setTermsOpen(account?.loan_original_amount != null)
   }
@@ -866,6 +870,7 @@ export function AccountDialog({
                 ...loanTermsPayload(loanTerms),
               }),
               display_name: displayName.trim() || null,
+              is_joint: isJoint,
               ...(isCC && {
                 credit_limit: creditLimit !== '' ? parseFloat(creditLimit) : null,
                 statement_close_day: parseDay(statementCloseDay),
@@ -1072,6 +1077,13 @@ export function AccountDialog({
               </div>
             </div>
           )}
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-3">
+            <div>
+              <Label id="account-joint-label">{t('accounts.jointLabel')}</Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('accounts.jointHint')}</p>
+            </div>
+            <Switch checked={isJoint} onCheckedChange={setIsJoint} aria-labelledby="account-joint-label" />
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common.cancel')}

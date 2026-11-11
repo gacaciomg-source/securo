@@ -19,6 +19,7 @@ const SetupPage = lazy(() => import('@/pages/setup'))
 const LoginPage = lazy(() => import('@/pages/login'))
 const RegisterPage = lazy(() => import('@/pages/register'))
 const DashboardPage = lazy(() => import('@/pages/dashboard'))
+const HomePage = lazy(() => import('@/pages/home'))
 const TransactionsPage = lazy(() => import('@/pages/transactions'))
 const AccountsPage = lazy(() => import('@/pages/accounts'))
 const AccountDetailPage = lazy(() => import('@/pages/account-detail'))
@@ -106,7 +107,8 @@ function App() {
                     </ProtectedRoute>
                   }
                 >
-                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/transactions" element={<ModuleRoute module="transactions"><TransactionsPage /></ModuleRoute>} />
                   <Route path="/accounts" element={<ModuleRoute module="accounts"><AccountsPage /></ModuleRoute>} />
                   <Route path="/accounts/:id" element={<ModuleRoute module="accounts"><AccountDetailPage /></ModuleRoute>} />

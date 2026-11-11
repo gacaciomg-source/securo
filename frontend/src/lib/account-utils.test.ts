@@ -5,6 +5,7 @@ import {
   sortAccountsByAbsoluteBalance,
   sortAccountsByDisplayName,
   sumAccountsTotal,
+  sumCashTotal,
 } from './account-utils'
 
 describe('sortAccountsByDisplayName', () => {
@@ -94,6 +95,19 @@ describe('sumAccountsTotal', () => {
     ]
 
     expect(sumAccountsTotal(accounts)).toBe(3500)
+  })
+})
+
+describe('sumCashTotal', () => {
+  it('counts the money in the accounts, not the card bill', () => {
+    const accounts = [
+      { type: 'checking', current_balance: 4000, balance_primary: null, shared_balance_group: null },
+      { type: 'savings', current_balance: 1000, balance_primary: null, shared_balance_group: null },
+      { type: 'credit_card', current_balance: -500, balance_primary: null, shared_balance_group: null },
+      { type: 'loan', current_balance: -200000, balance_primary: null, shared_balance_group: null },
+    ]
+
+    expect(sumCashTotal(accounts)).toBe(5000)
   })
 })
 

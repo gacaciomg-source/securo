@@ -962,3 +962,33 @@ async def test_account_without_opening_balance_has_no_balance_date(
     )
     fetched = await client.get(f"/api/accounts/{created.json()['id']}", headers=auth_headers)
     assert fetched.json()["balance_date"] is None
+
+
+@pytest.mark.asyncio
+async def test_account_can_be_marked_joint(client, auth_headers):
+    """A household account (joint bank account, the house account) is
+    flagged so the everyday views can show it under "together"."""
+    r = await client.post(
+        "/api/accounts",
+        json={"name": "Conta da casa", "type": "checking", "currency": "BRL", "is_joint": True},
+        headers=auth_headers,
+    )
+    assert r.status_code in (200, 201), r.text
+    account_id = r.json()["id"]
+    assert r.json()["is_joint"] is True
+
+    r = await client.patch(f"/api/accounts/{account_id}", json={"is_joint": False}, headers=auth_headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["is_joint"] is False
+
+    listed = (await client.get("/api/accounts", headers=auth_headers)).json()
+    assert next(a for a in listed if a["id"] == account_id)["is_joint"] is False
+
+
+@pytest.mark.asyncio
+async def test_connected_account_can_still_be_marked_joint(client, auth_headers, test_account):
+    """Joint is household bookkeeping, not bank data: allowed on synced accounts."""
+    r = await client.patch(f"/api/accounts/{test_account.id}", json={"is_joint": True}, headers=auth_headers)
+
+    assert r.status_code == 200, r.text
+    assert r.json()["is_joint"] is True

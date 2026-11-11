@@ -6,71 +6,80 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #F8F9FB;
-  --foreground: #0F172A;
+  /* Green palette, after the Financeiro screen of the church app the
+     household asked to look like: soft green page, white cards, one strong
+     green for actions. */
+  --background: #F2F7F3;
+  --foreground: #0F1A12;
   --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  --card-foreground: #0F1A12;
   --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  --primary: #6366F1;
+  --popover-foreground: #0F1A12;
+  --primary: #15803D;
   --primary-foreground: #FFFFFF;
-  --secondary: #F1F5F9;
-  --secondary-foreground: #0F172A;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: #EEF2FF;
-  --accent-foreground: #4F46E5;
-  --destructive: #F43F5E;
+  --secondary: #E8F2EA;
+  --secondary-foreground: #0F1A12;
+  --muted: #EDF4EE;
+  --muted-foreground: #5B6B60;
+  --accent: #E3F1E6;
+  --accent-foreground: #166534;
+  --destructive: #E11D48;
   --destructive-foreground: #FFFFFF;
-  --border: #E8ECF1;
-  --input: #E8ECF1;
-  --ring: #6366F1;
-  --radius: 0.625rem;
-  --chart-1: #6366F1;
-  --chart-2: #8B5CF6;
-  --chart-3: #10B981;
-  --chart-4: #F59E0B;
-  --chart-5: #F43F5E;
+  --border: #DCE8DE;
+  --input: #DCE8DE;
+  --ring: #16A34A;
+  --radius: 0.875rem;
+  --chart-1: #16A34A;
+  --chart-2: #0EA5E9;
+  --chart-3: #F59E0B;
+  --chart-4: #8B5CF6;
+  --chart-5: #E11D48;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F172A;
-  --sidebar-primary: #6366F1;
+  --sidebar-foreground: #0F1A12;
+  --sidebar-primary: #15803D;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1F5F9;
-  --sidebar-accent-foreground: #4F46E5;
-  --sidebar-border: #E8ECF1;
-  --sidebar-ring: #6366F1;
-  --sidebar-muted: #64748B;
+  --sidebar-accent: #E8F4EA;
+  --sidebar-accent-foreground: #166534;
+  --sidebar-border: #DCE8DE;
+  --sidebar-ring: #16A34A;
+  --sidebar-muted: #5B6B60;
 }
 
 .dark {
-  --background: #0C0D12;
-  --foreground: #F0F0F5;
-  --card: #16171F;
-  --card-foreground: #F0F0F5;
-  --popover: #16171F;
-  --popover-foreground: #F0F0F5;
-  --primary: #818CF8;
+  /* Deep green dark mode, like the church app's admin panel. */
+  --background: #0D1B10;
+  --foreground: #EEF5EF;
+  --card: #132617;
+  --card-foreground: #EEF5EF;
+  --popover: #132617;
+  --popover-foreground: #EEF5EF;
+  --primary: #2EA043;
   --primary-foreground: #FFFFFF;
-  --secondary: #252836;
-  --secondary-foreground: #F0F0F5;
-  --muted: #252836;
-  --muted-foreground: #8A8F9E;
-  --accent: #1E1B4B;
-  --accent-foreground: #A5B4FC;
+  --secondary: #1A3320;
+  --secondary-foreground: #EEF5EF;
+  --muted: #18301D;
+  --muted-foreground: #93A897;
+  --accent: #1C3A22;
+  --accent-foreground: #86EFAC;
   --destructive: #FB7185;
-  --destructive-foreground: #0C0D12;
-  --border: #2A2D3A;
-  --input: #2A2D3A;
-  --ring: #818CF8;
-  --sidebar: #16171F;
-  --sidebar-foreground: #F0F0F5;
-  --sidebar-primary: #818CF8;
+  --destructive-foreground: #0D1B10;
+  --border: #22402A;
+  --input: #22402A;
+  --ring: #2EA043;
+  --chart-1: #2EA043;
+  --chart-2: #38BDF8;
+  --chart-3: #FBBF24;
+  --chart-4: #A78BFA;
+  --chart-5: #FB7185;
+  --sidebar: #0A160C;
+  --sidebar-foreground: #EEF5EF;
+  --sidebar-primary: #2EA043;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #252836;
-  --sidebar-accent-foreground: #A5B4FC;
-  --sidebar-border: #2A2D3A;
-  --sidebar-ring: #818CF8;
-  --sidebar-muted: #8A8F9E;
+  --sidebar-accent: #1C3A22;
+  --sidebar-accent-foreground: #86EFAC;
+  --sidebar-border: #1A3320;
+  --sidebar-ring: #2EA043;
+  --sidebar-muted: #93A897;
 }
 
 @theme inline {
@@ -162,8 +171,8 @@
   animation: securo-highlight-flash 2.4s ease-out;
 }
 
-/* Soft ambient aurora for the auth brand panel. Drifting, blurred purple
-   blobs over a deep indigo base — slow enough to feel alive, not busy.
+/* Soft ambient aurora for the auth brand panel. Drifting, blurred green
+   blobs over a deep green base — slow enough to feel alive, not busy.
    Only transform/opacity animate, never layout. */
 @keyframes securo-aurora-1 {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
@@ -190,7 +199,7 @@
   width: 62%;
   height: 62%;
   opacity: 0.55;
-  background: radial-gradient(circle at center, #818cf8 0%, transparent 70%);
+  background: radial-gradient(circle at center, #4ade80 0%, transparent 70%);
   animation: securo-aurora-1 24s ease-in-out infinite;
 }
 .securo-aurora-2 {
@@ -199,7 +208,7 @@
   width: 68%;
   height: 68%;
   opacity: 0.5;
-  background: radial-gradient(circle at center, #a78bfa 0%, transparent 70%);
+  background: radial-gradient(circle at center, #22c55e 0%, transparent 70%);
   animation: securo-aurora-2 29s ease-in-out infinite;
 }
 .securo-aurora-3 {
@@ -208,7 +217,7 @@
   width: 46%;
   height: 46%;
   opacity: 0.4;
-  background: radial-gradient(circle at center, #c4b5fd 0%, transparent 70%);
+  background: radial-gradient(circle at center, #86efac 0%, transparent 70%);
   animation: securo-aurora-3 33s ease-in-out infinite;
 }
 

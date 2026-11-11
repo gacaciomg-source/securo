@@ -40,6 +40,7 @@ class AccountCreate(BaseModel):
     loan_term_months: Optional[int] = Field(default=None, ge=1, le=600)
     loan_first_payment_date: Optional[date] = None
     loan_amortization: Optional[LoanAmortization] = None
+    is_joint: bool = False
 
 
 class AccountUpdate(BaseModel):
@@ -63,6 +64,7 @@ class AccountUpdate(BaseModel):
     loan_term_months: Optional[int] = Field(default=None, ge=1, le=600)
     loan_first_payment_date: Optional[date] = None
     loan_amortization: Optional[LoanAmortization] = None
+    is_joint: Optional[bool] = None
 
 
 class AccountRead(AccountBase):
@@ -104,6 +106,7 @@ class AccountRead(AccountBase):
     loan_first_payment_date: Optional[date] = None
     loan_amortization: Optional[str] = None
     shared_balance_group: Optional[str] = None
+    is_joint: bool = False
     # Open bill of a card on a shared credit line (earliest due_date on or
     # after today), in the account's currency. The sidebar leads with it so
     # every card stops repeating the contract-wide balance. Null when the

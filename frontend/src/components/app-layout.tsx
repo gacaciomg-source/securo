@@ -4,7 +4,7 @@ import {
   sidebarAccountBalance,
   sidebarAccounts,
   sortAccountsByAbsoluteBalance,
-  sumAccountsTotal,
+  sumCashTotal,
 } from '@/lib/account-utils'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -58,6 +58,7 @@ import {
   ShieldCheck,
   Fingerprint,
   Plug,
+  UserRound,
 } from 'lucide-react'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { ChangePasswordDialog } from '@/components/change-password-dialog'
@@ -65,17 +66,25 @@ import { BackupDialog } from '@/components/backup-dialog'
 import { TwoFactorSetup } from '@/components/two-factor-setup'
 import { PasskeyManagementDialog } from '@/components/passkey-management-dialog'
 import { OpenFinanceKeysDialog } from '@/components/open-finance-keys-dialog'
+import { ProfileNameDialog } from '@/components/profile-name'
 import { CommandPalette } from '@/components/command-palette'
 import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
 import { GlobalChatPanel } from '@/components/global-chat-panel'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
-import { Bot, Plus, Search, Sparkles } from 'lucide-react'
+import { Bot, LayoutDashboard, Plus, Search, Sparkles } from 'lucide-react'
+import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import { setThemeBasedOnSystem } from '@/lib/theme-utils'
 import { nextTheme, THEME_LABEL_KEY } from '@/lib/theme-cycle'
 import { useLocalAuthEnabled } from '@/hooks/use-local-auth'
 import { formatCurrency } from '@/lib/format'
 
 const QuickAddTransaction = lazy(() => import('@/components/quick-add-transaction'))
+
+// Sidebar links, after the church app's menu: roomy rows, and the current
+// page as a solid green pill.
+const NAV_LINK_CLASS = 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold transition-all'
+const NAV_LINK_ACTIVE = 'bg-primary text-primary-foreground shadow-sm'
+const NAV_LINK_IDLE = 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground'
 
 /** Placeholder rows shown while the workspace's module list is in flight. */
 function NavSkeleton() {
@@ -116,6 +125,7 @@ export function AppLayout() {
   const [twoFactorOpen, setTwoFactorOpen] = useState(false)
   const [passkeysOpen, setPasskeysOpen] = useState(false)
   const [openFinanceKeysOpen, setOpenFinanceKeysOpen] = useState(false)
+  const [profileNameOpen, setProfileNameOpen] = useState(false)
   const [backupOpen, setBackupOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
@@ -205,7 +215,8 @@ export function AppLayout() {
   const visibleAccounts = activeAccountIds
     ? allAccounts.filter((a) => activeAccountIds.includes(a.id))
     : allAccounts
-  const totalBalance = sumAccountsTotal(visibleAccounts)
+  // Cash only: a card bill is debt to pay, not money already gone.
+  const totalBalance = sumCashTotal(visibleAccounts)
   const versionA11yLabel = t('app.versionAriaLabel', { version: APP_VERSION })
 
   return (
@@ -274,6 +285,7 @@ export function AppLayout() {
             onTwoFactor={() => setTwoFactorOpen(true)}
             onPasskeys={() => setPasskeysOpen(true)}
             onOpenFinanceKeys={() => setOpenFinanceKeysOpen(true)}
+            onProfileName={() => setProfileNameOpen(true)}
             localAuthEnabled={localAuthEnabled}
             agentsEnabled={agentsEnabled}
             onBackup={() => setBackupOpen(true)}
@@ -415,6 +427,26 @@ export function AppLayout() {
                 so until the workspace list lands there is no honest answer
                 — a placeholder beats both an empty sidebar and a guess. */}
             {workspaceLoading && <NavSkeleton />}
+            {!workspaceLoading && (
+              <Link
+                to="/"
+                data-tour="nav-dashboard"
+                onClick={() => setSidebarOpen(false)}
+                title={t('nav.dashboard')}
+                aria-label={t('nav.dashboard')}
+                className={cn(
+                  NAV_LINK_CLASS,
+                  location.pathname === '/' ? NAV_LINK_ACTIVE : NAV_LINK_IDLE,
+                  desktopSidebarCollapsed && 'lg:h-10 lg:w-10 lg:justify-center lg:px-0',
+                )}
+              >
+                <LayoutDashboard
+                  size={18}
+                  className={cn('shrink-0', location.pathname === '/' ? 'text-primary-foreground' : 'text-sidebar-muted', desktopSidebarCollapsed && 'lg:h-5 lg:w-5')}
+                />
+                <span className={cn(desktopSidebarCollapsed && 'lg:hidden')}>{t('nav.dashboard')}</span>
+              </Link>
+            )}
             {!workspaceLoading && finalNavItems.map((item, idx) => {
               if (item.type === 'separator') {
                 // The first separator sits right below the search bar
@@ -449,18 +481,16 @@ export function AppLayout() {
                   title={t(`nav.${item.key}`)}
                   aria-label={t(`nav.${item.key}`)}
                   className={cn(
-                    'flex items-center gap-3 text-[13px] font-medium transition-all rounded-lg px-3 py-2',
-                    isActive
-                      ? 'bg-primary/[0.08] text-primary border-l-[3px] border-primary pl-[9px]'
-                      : 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
-                    desktopSidebarCollapsed && 'lg:h-10 lg:w-10 lg:justify-center lg:border-l-0 lg:px-0 lg:pl-0',
+                    NAV_LINK_CLASS,
+                    isActive ? NAV_LINK_ACTIVE : NAV_LINK_IDLE,
+                    desktopSidebarCollapsed && 'lg:h-10 lg:w-10 lg:justify-center lg:px-0',
                   )}
                 >
                   <Icon
-                    size={17}
+                    size={18}
                     className={cn(
                       'shrink-0',
-                      isActive ? 'text-primary' : 'text-sidebar-muted',
+                      isActive ? 'text-primary-foreground' : 'text-sidebar-muted',
                       desktopSidebarCollapsed && 'lg:h-5 lg:w-5',
                     )}
                   />
@@ -604,7 +634,7 @@ export function AppLayout() {
           'flex-1 min-h-screen overflow-x-hidden transition-[margin] duration-300 ease-in-out motion-reduce:transition-none',
           desktopSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60',
         )}>
-          <div className="p-6 max-w-7xl mx-auto">
+          <div className="p-4 pb-28 sm:p-6 sm:pb-28 lg:pb-6 max-w-7xl mx-auto">
             {/* Active-collection filter (issue #105): sticky bar above the
                 content so the scope is visible right where the data is. */}
             <CollectionSelector variant="header" />
@@ -613,6 +643,11 @@ export function AppLayout() {
         </main>
       </div>
 
+      <MobileBottomNav
+        hasModule={hasModule}
+        onQuickAdd={canWrite ? () => setQuickAddOpen(true) : undefined}
+        onMenu={() => setSidebarOpen(true)}
+      />
       {showTour && <OnboardingTour onComplete={handleTourComplete} />}
       {localAuthEnabled && (
         <ChangePasswordDialog
@@ -634,6 +669,7 @@ export function AppLayout() {
         open={openFinanceKeysOpen}
         onClose={() => setOpenFinanceKeysOpen(false)}
       />
+      <ProfileNameDialog open={profileNameOpen} onClose={() => setProfileNameOpen(false)} />
       <BackupDialog open={backupOpen} onClose={() => setBackupOpen(false)} />
       {quickAddOpen && (
         <Suspense fallback={null}>
@@ -660,6 +696,7 @@ function UserMenu({
   onTwoFactor,
   onPasskeys,
   onOpenFinanceKeys,
+  onProfileName,
   localAuthEnabled,
   onBackup,
   dark,
@@ -672,6 +709,7 @@ function UserMenu({
   onTwoFactor: () => void
   onPasskeys: () => void
   onOpenFinanceKeys: () => void
+  onProfileName: () => void
   localAuthEnabled: boolean
   onBackup: () => void
   dark?: boolean
@@ -712,6 +750,13 @@ function UserMenu({
             <DropdownMenuSeparator />
           </>
         )}
+        <DropdownMenuItem
+          onClick={onProfileName}
+          className="flex items-center gap-2"
+        >
+          <UserRound size={14} />
+          {t('profileName.menu')}
+        </DropdownMenuItem>
         {localAuthEnabled && (
           <DropdownMenuItem
             onClick={onChangePassword}
