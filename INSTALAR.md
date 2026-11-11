@@ -8,6 +8,7 @@ Esta é uma versão do [Securo](https://github.com/securo-finance/securo) adapta
 - **Cartão sem confusão:** pagamento de fatura não conta mais como gasto nem como renda; cada fatura mostra se está aberta, fechada, paga, paga em parte ou vencida, com o botão "Marcar como paga".
 - **Metas com foto:** metas do casal ou de cada um, com foto, o nome de quem criou e um botão "Guardar dinheiro".
 - **Classificar fácil:** trocou a categoria de um gasto? O app oferece aplicar a mesma categoria em tudo daquela loja, inclusive nos próximos.
+- **A chave do servidor é só do administrador:** se o `.env` tiver `PLUGGY_CLIENT_ID`/`PLUGGY_CLIENT_SECRET`, só quem é administrador conecta bancos por ela. Qualquer outra pessoa, ao clicar em Pluggy, vê uma janela pedindo as próprias chaves, com o passo a passo de onde pegá-las. Assim ninguém gasta a cota do Pluggy de outra pessoa sem querer. Para voltar ao jeito antigo (chave do servidor para todo mundo), ponha `PLUGGY_INSTANCE_KEYS_ADMIN_ONLY=false` no `.env`.
 
 O código fica na branch `casal`. As melhorias são montadas direto no seu servidor (as imagens prontas do projeto oficial não têm essas mudanças).
 
@@ -82,10 +83,17 @@ Outras pessoas da família ficam no workspace delas e não veem o de vocês.
 
 ## 7. Conectar os bancos (cada pessoa faz o seu)
 
-1. Crie sua conta grátis em [meu.pluggy.ai](https://meu.pluggy.ai) e conecte seus bancos lá.
-2. No Securo, abra o menu do canto de baixo do menu lateral (no celular, a sua foto no canto de cima) e vá em **Minhas chaves do Open Finance**.
-3. Siga o passo a passo da tela, cole o *Client ID* e o *Client Secret* e clique em **Testar e salvar**.
-4. Em **Contas**, conecte o banco normalmente.
+No Securo, em **Contas → Conectar banco → Pluggy**, quem ainda não tem chaves vê a janela abaixo na hora. Também dá para abrir em **Minhas chaves do Open Finance**, no menu do canto de baixo do menu lateral (no celular, na sua foto, no canto de cima).
+
+1. Crie sua conta grátis em [meu.pluggy.ai](https://meu.pluggy.ai) (e-mail e senha, sem convite).
+2. Lá dentro, clique em **Conectar Minha Conta**, escolha o banco e autorize no app dele. Espere voltar para o Meu Pluggy: a conta aparece com saldo e extrato.
+3. Crie também uma conta, com o mesmo e-mail, em [dashboard.pluggy.ai](https://dashboard.pluggy.ai). Ignore o aviso de teste de 15 dias; ele não vale para uso pessoal.
+4. No painel, crie **uma** aplicação (uma só basta para todos os bancos).
+5. Abra a aba **Aplicação** dessa aplicação e copie o *Client ID* e o *Client Secret*.
+6. Cole os dois na janela do Securo e clique em **Testar e salvar**. O Securo confere com a Pluggy antes de guardar.
+7. Na hora de conectar o banco, escolha **MeuPluggy** na lista (não o banco direto) e entre com a conta do Meu Pluggy.
+
+As chaves ficam guardadas criptografadas e ninguém consegue vê-las de novo, nem o administrador.
 
 ## Atualizar
 

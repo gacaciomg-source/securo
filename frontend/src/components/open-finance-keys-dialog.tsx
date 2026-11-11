@@ -24,6 +24,8 @@ interface OpenFinanceKeysDialogProps {
   onClose: () => void
   /** Called after keys are saved or removed, so callers can refetch providers. */
   onChanged?: () => void
+  /** Called right after keys are saved, for callers that want to carry on connecting. */
+  onSaved?: () => void
 }
 
 /**
@@ -47,7 +49,7 @@ function maskClientId(clientId: string): string {
   return clientId.length > 8 ? `${clientId.slice(0, 8)}…` : clientId
 }
 
-function OpenFinanceKeysSession({ open, onClose, onChanged }: OpenFinanceKeysDialogProps) {
+function OpenFinanceKeysSession({ open, onClose, onChanged, onSaved }: OpenFinanceKeysDialogProps) {
   const { t } = useTranslation()
   const [status, setStatus] = useState<ProviderCredentialStatus | null>(null)
   const [loading, setLoading] = useState(true)
@@ -91,6 +93,7 @@ function OpenFinanceKeysSession({ open, onClose, onChanged }: OpenFinanceKeysDia
       setClientSecret('')
       toast.success(t('openFinanceKeys.saved'))
       onChanged?.()
+      onSaved?.()
     } catch (err) {
       const { detail } = errorStatus(err)
       setError(
@@ -173,7 +176,10 @@ function OpenFinanceKeysSession({ open, onClose, onChanged }: OpenFinanceKeysDia
                     </a>
                   </li>
                   <li>{t('openFinanceKeys.step4')}</li>
+                  <li>{t('openFinanceKeys.step5')}</li>
+                  <li>{t('openFinanceKeys.step6')}</li>
                 </ol>
+                <p className="text-xs text-muted-foreground">{t('openFinanceKeys.stepsNote')}</p>
                 {status?.instance_configured && !status.has_personal_credentials && (
                   <p className="text-xs text-muted-foreground">{t('openFinanceKeys.instanceFallback')}</p>
                 )}

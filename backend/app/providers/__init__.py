@@ -71,14 +71,23 @@ def is_provider_registered(name: str) -> bool:
     return name in _PROVIDERS
 
 
-def all_known_providers(extra_configured: frozenset[str] | set[str] = frozenset()) -> list[dict]:
+def all_known_providers(
+    extra_configured: frozenset[str] | set[str] = frozenset(),
+    instance_unavailable: frozenset[str] | set[str] = frozenset(),
+) -> list[dict]:
     """Return all known providers with a configured flag.
 
     ``extra_configured`` names providers the caller can use through keys of
     their own (see provider_credentials_service), on top of the instance's.
+    ``instance_unavailable`` names providers whose instance keys this caller
+    may not use, even though the instance has them.
     """
     return [
-        {**p, "configured": p["name"] in _PROVIDERS or p["name"] in extra_configured}
+        {
+            **p,
+            "configured": (p["name"] in _PROVIDERS and p["name"] not in instance_unavailable)
+            or p["name"] in extra_configured,
+        }
         for p in KNOWN_PROVIDERS
     ]
 

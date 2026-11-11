@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # Pluggy
     pluggy_client_id: str = ""
     pluggy_client_secret: SecretStr = SecretStr("")
+    # Who may connect banks through the PLUGGY_CLIENT_ID above. The free Meu
+    # Pluggy plan only covers the account holder's own banks, so by default
+    # only administrators use the instance keys and everyone else is asked for
+    # their own (Settings > Open Finance keys). False shares them with everyone.
+    pluggy_instance_keys_admin_only: bool = True
     # Empty means "derive from FRONTEND_URL" (see BankProvider.redirect_uri).
     # Set explicitly only when the URL registered in the provider dashboard
     # differs from where the app is served.

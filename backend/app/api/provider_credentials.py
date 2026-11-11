@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import current_active_user
 from app.core.database import get_async_session
 from app.models.user import User
-from app.providers import is_provider_registered
 from app.schemas.provider_credential import ProviderCredentialRead, ProviderCredentialUpdate
 from app.services import provider_credentials_service as service
 
@@ -36,7 +35,9 @@ async def _read(session: AsyncSession, user: User, provider: str) -> ProviderCre
         provider=provider,
         has_personal_credentials=credential is not None,
         client_id=credential.client_id if credential else None,
-        instance_configured=is_provider_registered(provider),
+        # Whether *this person* may fall back to the instance's keys, not just
+        # whether they exist: by default only administrators may.
+        instance_configured=service.instance_keys_usable_by(provider, user),
         connections_using=using,
     )
 

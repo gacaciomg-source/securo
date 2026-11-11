@@ -16,6 +16,9 @@ os.environ.setdefault("AGENTS_BUILTIN_MCP_URL", "http://test-mcp:8765/mcp")
 # Settings(_secrets_dir=...) tests still exercise secret-file loading.
 os.environ["SECRET_KEY"] = "synthetic-test-signing-key-not-for-production"
 os.environ["CREDENTIALS_DIRECTORY"] = ""
+# Upstream tests assume anyone may use the instance Pluggy keys;
+# test_provider_credentials.py turns the admin-only rule back on.
+os.environ.setdefault("PLUGGY_INSTANCE_KEYS_ADMIN_ONLY", "false")
 
 # pgvector's Vector type only compiles on PostgreSQL. Tests use SQLite, so
 # we shim it with JSON before any model module imports it. Production runs
