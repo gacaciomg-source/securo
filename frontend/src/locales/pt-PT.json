@@ -3314,5 +3314,13 @@
     "prompt": "Como podemos te chamar? Seu nome aparece para a família.",
     "saved": "Nome salvo.",
     "error": "Não deu para salvar o nome. Tente de novo."
+  },
+  "similar": {
+    "question": "Usar \"{{category}}\" em tudo que for de \"{{key}}\"?",
+    "apply": "Aplicar a todos",
+    "ruleName": "{{key}} → {{category}}",
+    "applied_one": "Pronto. {{count}} lançamento atualizado, e os próximos já vêm certos.",
+    "applied_other": "Pronto. {{count}} lançamentos atualizados, e os próximos já vêm certos.",
+    "exists": "Já existe uma regra para essa loja. Ajuste em Regras."
   }
 }

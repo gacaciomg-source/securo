@@ -3466,5 +3466,13 @@
     "prompt": "What should we call you? Your name shows up for the household.",
     "saved": "Name saved.",
     "error": "Couldn't save the name. Try again."
+  },
+  "similar": {
+    "question": "Use \"{{category}}\" for everything from \"{{key}}\"?",
+    "apply": "Apply to all",
+    "ruleName": "{{key}} → {{category}}",
+    "applied_one": "Done. {{count}} entry updated, and new ones will follow.",
+    "applied_other": "Done. {{count}} entries updated, and new ones will follow.",
+    "exists": "There is already a rule for this merchant. Change it in Rules."
   }
 }

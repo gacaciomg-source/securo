@@ -50,6 +50,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { AlertTriangle, ArrowLeftRight, ArrowUp, ArrowDown, Check, Clock, HelpCircle, Info, Paperclip, TagIcon, Trash2, Users, X, EyeClosed, ChartNoAxesColumn, SlidersHorizontal, Receipt } from 'lucide-react'
 import type { Transaction, Rule, InstallmentSeriesInput, TransactionApplyScope, TransactionEditPayload, ReconciliationSuggestion } from '@/types'
 import { RuleDialog, type RuleDialogInitialData } from '@/components/rule-dialog'
+import { useApplyToSimilar } from '@/hooks/use-apply-to-similar'
 import { PageHeader } from '@/components/page-header'
 import { calculateRangeSelection } from '@/lib/selection-utils'
 import { isManualInstallmentSeriesRow } from '@/lib/installment-series'
@@ -160,6 +161,7 @@ export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
+  const applyToSimilar = useApplyToSimilar()
   const [pendingTransferCategoryUpdate, setPendingTransferCategoryUpdate] =
     useState<PendingTransferCategoryUpdate | null>(null)
   // Manual installment-series scoped delete. Scoped edits are handled by the
@@ -927,7 +929,16 @@ export default function TransactionsPage() {
       return
     }
 
-    updateMutation.mutate({ id: editingTx.id, ...data })
+    // A new category for one entry: offer the same for that merchant's others.
+    const newCategoryId = (data as { category_id?: string | null }).category_id
+    const newCategory = newCategoryId && newCategoryId !== editingTx.category_id
+      ? categoriesList?.find((c) => c.id === newCategoryId)
+      : undefined
+    const description = editingTx.description
+    updateMutation.mutate(
+      { id: editingTx.id, ...data },
+      newCategory ? { onSuccess: () => applyToSimilar(description, newCategory) } : undefined,
+    )
   }
 
   const submitPendingSeriesDelete = (scope: TransactionApplyScope) => {

@@ -896,7 +896,7 @@
     "ratesError": "Erro ao atualizar taxas de câmbio"
   },
   "transactions": {
-    "title": "Transações",
+    "title": "Extrato",
     "mortgageAllocation": "Detalhamento do pagamento da hipoteca",
     "mortgagePrincipal": "Amortização",
     "mortgageInterest": "Juros",
@@ -984,7 +984,7 @@
     "colCategory": "Categoria",
     "colAccount": "Conta",
     "colAmount": "Valor",
-    "colPayee": "Pessoa",
+    "colPayee": "Loja / quem recebeu",
     "colNotes": "Notas",
     "colTags": "Tags",
     "colAttachments": "Arquivos",
@@ -1689,7 +1689,7 @@
     "fieldAmount": "Valor",
     "fieldType": "Tipo",
     "fieldAccount": "Conta",
-    "fieldPayee": "Pessoa",
+    "fieldPayee": "Loja ou quem recebeu",
     "fieldDate": "Data",
     "fieldStatus": "Status",
     "opContains": "contém",
@@ -2250,10 +2250,10 @@
     "addFavorite": "Adicionar aos favoritos",
     "removeFavorite": "Remover dos favoritos",
     "favoriteError": "Não foi possível atualizar o favorito",
-    "title": "Pessoas",
+    "title": "Lojas e pessoas",
     "section": "Configuração",
-    "payee": "Pessoa",
-    "noPayee": "Sem pessoa vinculada",
+    "payee": "Loja ou quem recebeu",
+    "noPayee": "Nenhuma loja vinculada",
     "rawPayee": "Descrição original",
     "name": "Nome",
     "type": "Tipo",
@@ -3314,5 +3314,13 @@
     "prompt": "Como podemos te chamar? Seu nome aparece para a família.",
     "saved": "Nome salvo.",
     "error": "Não deu para salvar o nome. Tente de novo."
+  },
+  "similar": {
+    "question": "Usar \"{{category}}\" em tudo que for de \"{{key}}\"?",
+    "apply": "Aplicar a todos",
+    "ruleName": "{{key}} → {{category}}",
+    "applied_one": "Pronto. {{count}} lançamento atualizado, e os próximos já vêm certos.",
+    "applied_other": "Pronto. {{count}} lançamentos atualizados, e os próximos já vêm certos.",
+    "exists": "Já existe uma regra para essa loja. Ajuste em Regras."
   }
 }
