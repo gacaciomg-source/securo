@@ -46,6 +46,8 @@ import {
   ShieldCheck,
   Sparkles,
   Fingerprint,
+  Plug,
+  UserRound,
 } from 'lucide-react'
 import { CategoryIcon } from '@/components/category-icon'
 import {
@@ -82,6 +84,10 @@ interface AccountMenuProps {
   onTwoFactor: () => void
   /** Open the passkey management dialog. */
   onPasskeys: () => void
+  /** Open the dialog for the person's own Open Finance (Meu Pluggy) keys. */
+  onOpenFinanceKeys?: () => void
+  /** Open the dialog for the name the household sees. */
+  onProfileName?: () => void
   /** Trigger a backup download. */
   onBackup: () => void
   /** Open the "Update available" dialog. */
@@ -107,6 +113,8 @@ export function WorkspaceSwitcher({
   onChangePassword,
   onTwoFactor,
   onPasskeys,
+  onOpenFinanceKeys,
+  onProfileName,
   onBackup,
   onUpdateAvailable,
   agentsEnabled,
@@ -248,6 +256,18 @@ export function WorkspaceSwitcher({
           )}
 
           {/* Account actions */}
+          {onProfileName && (
+            <DropdownMenuItem onClick={onProfileName} className="flex items-center gap-2">
+              <UserRound size={14} />
+              {t('profileName.menu')}
+            </DropdownMenuItem>
+          )}
+          {onOpenFinanceKeys && (
+            <DropdownMenuItem onClick={onOpenFinanceKeys} className="flex items-center gap-2">
+              <Plug size={14} />
+              {t('openFinanceKeys.menu')}
+            </DropdownMenuItem>
+          )}
           {localAuthEnabled && (
             <DropdownMenuItem
               onClick={onChangePassword}

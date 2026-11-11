@@ -608,6 +608,8 @@ export function AppLayout() {
               onChangePassword={() => setChangePasswordOpen(true)}
               onTwoFactor={() => setTwoFactorOpen(true)}
               onPasskeys={() => setPasskeysOpen(true)}
+              onOpenFinanceKeys={() => setOpenFinanceKeysOpen(true)}
+              onProfileName={() => setProfileNameOpen(true)}
               localAuthEnabled={localAuthEnabled}
               onBackup={() => setBackupOpen(true)}
               onUpdateAvailable={() => setUpdateDialogOpen(true)}

@@ -384,7 +384,7 @@ function Indicator({ title, value, tone, icon: Icon, change, inverse, detail, t 
         <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
         <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg', chip)}><Icon className="h-4 w-4" /></span>
       </div>
-      <p className={cn('mt-1 text-[clamp(1.05rem,4.6vw,1.6rem)] font-extrabold tabular-nums leading-tight', color)}>{value}</p>
+      <p className={cn('mt-1 whitespace-nowrap text-[clamp(1rem,4.4vw,1.55rem)] font-extrabold tabular-nums leading-tight tracking-tight', color)}>{value}</p>
       {change != null ? (
         <p className={cn('mt-1 text-[11px] font-semibold', good ? 'text-emerald-600' : 'text-rose-600')}>
           {change >= 0 ? '▲' : '▼'} {Math.abs(change).toFixed(0)}% <span className="font-normal text-muted-foreground">{t('home.vsBefore')}</span>

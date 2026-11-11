@@ -3,6 +3,11 @@
 Esta é uma versão do [Securo](https://github.com/securo-finance/securo) adaptada para usar em casal e em família, no mesmo servidor:
 
 - **Open Finance por pessoa:** cada um conecta os próprios bancos com a sua conta grátis do [Meu Pluggy](https://meu.pluggy.ai). O plano grátis só aceita contas do mesmo titular (CPF), então cada pessoa precisa da sua.
+- **Painel simples, no celular também:** entradas, saídas, quanto sobrou e o saldo em conta, com filtro **Todos / cada pessoa / Conjunto**. No celular, uma barra embaixo com um botão grande de "+".
+- **Conta conjunta:** marque a conta da casa como conjunta e ela aparece em "Conjunto", não no nome de quem conectou.
+- **Cartão sem confusão:** pagamento de fatura não conta mais como gasto nem como renda; cada fatura mostra se está aberta, fechada, paga, paga em parte ou vencida, com o botão "Marcar como paga".
+- **Metas com foto:** metas do casal ou de cada um, com foto, o nome de quem criou e um botão "Guardar dinheiro".
+- **Classificar fácil:** trocou a categoria de um gasto? O app oferece aplicar a mesma categoria em tudo daquela loja, inclusive nos próximos.
 
 O código fica na branch `casal`. As melhorias são montadas direto no seu servidor (as imagens prontas do projeto oficial não têm essas mudanças).
 
@@ -67,10 +72,18 @@ sudo systemctl reload caddy
 
 Abra `https://financas.seudominio.com.br`. A primeira conta criada vira a administradora. Em **Administração**, confira o fuso horário (America/Sao_Paulo), crie as contas das outras pessoas e depois desligue os cadastros novos.
 
-## 6. Conectar os bancos (cada pessoa faz o seu)
+## 6. Montar o casal
+
+1. No canto de baixo do menu lateral, clique no nome do workspace e vá em **Meu nome** para escolher como você aparece. No celular, o mesmo menu fica na sua foto, no canto de cima.
+2. No mesmo menu, abra **Workspace**, renomeie para "Casal" e em **Membros → Adicionar membro** coloque o e-mail da outra pessoa com o papel **Editor**.
+3. Em **Contas e cartões**, edite a conta da casa (se tiver) e ligue **Conta conjunta**.
+
+Outras pessoas da família ficam no workspace delas e não veem o de vocês.
+
+## 7. Conectar os bancos (cada pessoa faz o seu)
 
 1. Crie sua conta grátis em [meu.pluggy.ai](https://meu.pluggy.ai) e conecte seus bancos lá.
-2. No Securo, abra o menu da sua foto (canto superior direito) e vá em **Minhas chaves do Open Finance**.
+2. No Securo, abra o menu do canto de baixo do menu lateral (no celular, a sua foto no canto de cima) e vá em **Minhas chaves do Open Finance**.
 3. Siga o passo a passo da tela, cole o *Client ID* e o *Client Secret* e clique em **Testar e salvar**.
 4. Em **Contas**, conecte o banco normalmente.
 
