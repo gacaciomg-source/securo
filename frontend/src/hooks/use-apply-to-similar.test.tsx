@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { act } from '@testing-library/react'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@/test/utils'
@@ -9,11 +10,13 @@ vi.mock('sonner', () => ({
   toast: Object.assign(mocks.toast, { success: mocks.success, error: mocks.error }),
 }))
 
-let offer: ReturnType<typeof useApplyToSimilar>
+const probe: { offer?: ReturnType<typeof useApplyToSimilar> } = {}
 function Probe() {
-  offer = useApplyToSimilar()
+  const offer = useApplyToSimilar()
+  useEffect(() => { probe.offer = offer }, [offer])
   return null
 }
+const offer: ReturnType<typeof useApplyToSimilar> = (...args) => probe.offer!(...args)
 
 beforeEach(() => { vi.resetAllMocks() })
 
