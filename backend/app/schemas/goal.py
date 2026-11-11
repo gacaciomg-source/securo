@@ -19,6 +19,7 @@ class GoalCreate(BaseModel):
     icon: Optional[str] = None
     color: Optional[str] = None
     metadata_json: Optional[Any] = None
+    is_joint: bool = False
 
     @field_validator("tracking_type")
     @classmethod
@@ -43,6 +44,7 @@ class GoalUpdate(BaseModel):
     color: Optional[str] = None
     position: Optional[int] = None
     metadata_json: Optional[Any] = None
+    is_joint: Optional[bool] = None
 
     @field_validator("status")
     @classmethod
@@ -80,6 +82,11 @@ class GoalRead(BaseModel):
     metadata_json: Optional[Any] = None
     created_at: datetime
     updated_at: datetime
+    is_joint: bool = False
+    # Whether a cover photo is stored; fetch it from /api/goals/{id}/image.
+    # `image_version` changes with each upload, for cache busting.
+    has_image: bool = False
+    image_version: Optional[str] = None
 
     # Computed fields
     percentage: float = 0

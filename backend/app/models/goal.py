@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Optional
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -43,6 +43,11 @@ class Goal(Base):
     color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)
     position: Mapped[int] = mapped_column(Integer, default=0)
     metadata_json: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
+    # A goal the household saves for together, as opposed to one person's.
+    is_joint: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Cover photo in the storage provider (the trip, the car, the house).
+    image_key: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    image_content_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

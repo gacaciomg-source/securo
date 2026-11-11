@@ -1128,6 +1128,11 @@ export interface Goal {
   color: string | null
   position: number
   metadata_json: Record<string, unknown> | null
+  /** Saved for by the household together, rather than by one person. */
+  is_joint?: boolean
+  has_image?: boolean
+  /** Changes with each new photo, for cache busting. */
+  image_version?: string | null
   created_at: string
   updated_at: string
   percentage: number

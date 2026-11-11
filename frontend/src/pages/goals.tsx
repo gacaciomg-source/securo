@@ -3,7 +3,7 @@ import { getAccountName, sortAccountsByDisplayName } from '@/lib/account-utils'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale } from '@/hooks/use-display-locale'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { goals as goalsApi, accounts as accountsApi, assets as assetsApi, assetGroups as assetGroupsApi, currencies as currenciesApi } from '@/lib/api'
+import { goals as goalsApi, accounts as accountsApi, assets as assetsApi, assetGroups as assetGroupsApi, currencies as currenciesApi, workspaces as workspacesApi } from '@/lib/api'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
@@ -24,10 +24,12 @@ import {
 import type { Account, Asset, AssetGroup, Goal } from '@/types'
 import {
   Pencil, Trash2, Plus, Pause, Play, CheckCircle2, Archive, ArchiveRestore, Target,
-  ChevronDown,
+  ChevronDown, PiggyBank, Users,
 } from 'lucide-react'
 import { ICON_MAP } from '@/lib/category-icons'
 import { IconPicker } from '@/components/icon-picker'
+import { GoalCover } from '@/components/goal-cover'
+import { Switch } from '@/components/ui/switch'
 import { PageHeader } from '@/components/page-header'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
@@ -82,14 +84,6 @@ function SectionCard({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       {children}
-    </div>
-  )
-}
-function SectionHeader({ title, action }: { title: string; action?: React.ReactNode }) {
-  return (
-    <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
-      <p className="text-sm font-semibold text-foreground">{title}</p>
-      {action}
     </div>
   )
 }
@@ -150,6 +144,20 @@ export default function GoalsPage() {
   const [selectedIcon, setSelectedIcon] = useState('target')
   const [selectedColor, setSelectedColor] = useState('#3B82F6')
   const [targetDate, setTargetDate] = useState('')
+  const [isJoint, setIsJoint] = useState(false)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [removePhoto, setRemovePhoto] = useState(false)
+  const [contributing, setContributing] = useState<Goal | null>(null)
+  const { current: workspace } = useWorkspace()
+  const { data: members } = useQuery({
+    queryKey: ['workspace-members', workspace?.id],
+    queryFn: () => workspacesApi.listMembers(workspace!.id),
+    enabled: !!workspace?.id,
+  })
+  // Who set each goal, by the name the household knows them by.
+  const memberById = new Map(
+    (members ?? []).map((m) => [m.user_id, m.display_name?.trim() || m.email.split('@')[0]]),
+  )
 
   const { data: goalsList } = useQuery({
     queryKey: ['goals', statusFilter],
@@ -177,8 +185,17 @@ export default function GoalsPage() {
     staleTime: Infinity,
   })
 
+  // The photo goes up right after the goal is saved: a new goal has no id
+  // to attach it to before that.
+  const savePhoto = async (goal: Goal, photo: { file: File | null; remove: boolean }) => {
+    if (photo.file) return goalsApi.uploadImage(goal.id, photo.file)
+    if (photo.remove && goal.has_image) return goalsApi.deleteImage(goal.id)
+    return goal
+  }
+
   const createMutation = useMutation({
-    mutationFn: (data: Partial<Goal>) => goalsApi.create(data),
+    mutationFn: async ({ photo, ...data }: Partial<Goal> & { photo: { file: File | null; remove: boolean } }) =>
+      savePhoto(await goalsApi.create(data), photo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] })
       setDialogOpen(false)
@@ -188,7 +205,8 @@ export default function GoalsPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: Partial<Goal> & { id: string }) => goalsApi.update(id, data),
+    mutationFn: async ({ id, photo, ...data }: Partial<Goal> & { id: string; photo: { file: File | null; remove: boolean } }) =>
+      savePhoto(await goalsApi.update(id, data), photo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] })
       setDialogOpen(false)
@@ -208,6 +226,17 @@ export default function GoalsPage() {
     onError: () => toast.error(t('common.error')),
   })
 
+  const contributeMutation = useMutation({
+    mutationFn: ({ goal, amount }: { goal: Goal; amount: number }) =>
+      goalsApi.update(goal.id, { current_amount: Number(goal.current_amount) + amount } as Partial<Goal>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] })
+      setContributing(null)
+      toast.success(t('goals.contributed'))
+    },
+    onError: () => toast.error(t('common.error')),
+  })
+
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => goalsApi.update(id, { status } as Partial<Goal>),
     onSuccess: () => {
@@ -222,6 +251,9 @@ export default function GoalsPage() {
     setSelectedIcon('target')
     setSelectedColor('#3B82F6')
     setTargetDate('')
+    setIsJoint(false)
+    setPhotoFile(null)
+    setRemovePhoto(false)
     setDialogOpen(true)
   }
 
@@ -231,6 +263,9 @@ export default function GoalsPage() {
     setSelectedIcon(goal.icon ?? 'target')
     setSelectedColor(goal.color ?? '#3B82F6')
     setTargetDate(goal.target_date ?? '')
+    setIsJoint(goal.is_joint ?? false)
+    setPhotoFile(null)
+    setRemovePhoto(false)
     setDialogOpen(true)
   }
 
@@ -258,169 +293,144 @@ export default function GoalsPage() {
         ))}
       </div>
 
-      <SectionCard>
-        <SectionHeader
-          title={t('goals.title')}
-          action={
-            canWrite ? (
-              <Button size="sm" className="gap-1.5 h-8" onClick={openCreateDialog}>
-                <Plus size={13} /> {t('goals.add')}
-              </Button>
-            ) : undefined
-          }
-        />
-        {goalsList && goalsList.length > 0 ? (
-          <div className="divide-y divide-border">
-            {goalsList.map((goal) => {
-              const days = goal.target_date ? daysUntil(goal.target_date) : null
-              const progressColor = goal.percentage >= 100
-                ? 'bg-emerald-500'
-                : goal.percentage >= 60
-                  ? 'bg-blue-500'
-                  : goal.percentage >= 30
-                    ? 'bg-amber-400'
-                    : 'bg-muted-foreground/30'
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{t('goals.intro')}</p>
+        {canWrite && (
+          <Button className="h-10 shrink-0 gap-1.5 rounded-xl" onClick={openCreateDialog}>
+            <Plus size={16} /> {t('goals.add')}
+          </Button>
+        )}
+      </div>
+      {goalsList && goalsList.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {goalsList.map((goal) => {
+            const days = goal.target_date ? daysUntil(goal.target_date) : null
+            const progressColor = goal.percentage >= 100
+              ? 'bg-emerald-500'
+              : goal.percentage >= 60
+                ? 'bg-primary'
+                : goal.percentage >= 30
+                  ? 'bg-amber-400'
+                  : 'bg-muted-foreground/40'
+            const GoalIcon = getGoalIcon(goal.icon)
+            const owner = memberById.get(goal.user_id)
+            return (
+              <article key={goal.id} className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <GoalCover goal={goal} icon={GoalIcon} className="h-36">
+                  <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                    {goal.is_joint ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                        <Users size={12} /> {t('goals.jointBadge')}
+                      </span>
+                    ) : owner ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                        {t('goals.ownerBadge', { name: owner })}
+                      </span>
+                    ) : null}
+                  </div>
+                </GoalCover>
 
-              const GoalIcon = getGoalIcon(goal.icon)
-              return (
-                <div key={goal.id} className="px-4 sm:px-5 py-4 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start gap-4">
-                    {/* Icon */}
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white"
-                      style={{ backgroundColor: goal.color ?? '#6B7280' }}
-                    >
-                      <GoalIcon size={18} />
+                <div className="flex flex-1 flex-col gap-3 p-4">
+                  <div className="space-y-1.5">
+                    <h3 className="text-base font-bold leading-tight text-foreground">{goal.name}</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      <StatusBadge status={goal.status} t={t} />
+                      <OnTrackBadge status={goal.on_track} t={t} />
                     </div>
+                  </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-foreground truncate">{goal.name}</span>
-                        <StatusBadge status={goal.status} t={t} />
-                        <OnTrackBadge status={goal.on_track} t={t} />
-                      </div>
-
-                      {/* Progress bar */}
-                      <div className="flex items-center gap-3 mb-1.5">
-                        <div className="flex-1 h-2 bg-muted/60 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${progressColor}`}
-                            style={{ width: `${Math.min(goal.percentage, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold tabular-nums text-foreground shrink-0">
-                          {goal.percentage.toFixed(0)}%
-                        </span>
-                      </div>
-
-                      {/* Details row */}
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span className="tabular-nums font-medium">
-                          {mask(formatCurrency(goal.current_amount, goal.currency, locale))}
-                          {' / '}
-                          {mask(formatCurrency(goal.target_amount, goal.currency, locale))}
-                        </span>
-                        {goal.monthly_contribution != null && goal.monthly_contribution > 0 && (
-                          <span className="tabular-nums">
-                            {mask(formatCurrency(goal.monthly_contribution, goal.currency, locale))}{t('goals.perMonth')}
-                          </span>
-                        )}
-                        {days !== null && (
-                          <span className={days < 0 ? 'text-rose-500' : ''}>
-                            {days >= 0
-                              ? t('goals.daysRemaining', { count: days })
-                              : t('goals.daysOverdue', { count: Math.abs(days) })}
-                          </span>
-                        )}
-                        {!goal.target_date && (
-                          <span>{t('goals.noTargetDate')}</span>
-                        )}
-                        {goal.account_name && (
-                          <span>{goal.account_name}</span>
-                        )}
-                        {goal.asset_name && (
-                          <span>{goal.asset_name}</span>
-                        )}
-                        {goal.asset_group_name && (
-                          <span>{goal.asset_group_name}</span>
-                        )}
-                      </div>
+                  <div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-lg font-extrabold tabular-nums text-foreground">
+                        {mask(formatCurrency(goal.current_amount, goal.currency, locale))}
+                      </span>
+                      <span className="text-sm font-bold tabular-nums text-primary">{goal.percentage.toFixed(0)}%</span>
                     </div>
+                    <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted">
+                      <div className={`h-full rounded-full transition-all ${progressColor}`} style={{ width: `${Math.min(goal.percentage, 100)}%` }} />
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t('goals.ofTarget', { target: mask(formatCurrency(goal.target_amount, goal.currency, locale)) })}
+                    </p>
+                  </div>
 
-                    {/* Actions */}
-                    {canWrite && (
-                      <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {goal.monthly_contribution != null && goal.monthly_contribution > 0 && (
+                      <span className="tabular-nums">
+                        {t('goals.savePerMonth', { amount: mask(formatCurrency(goal.monthly_contribution, goal.currency, locale)) })}
+                      </span>
+                    )}
+                    {days !== null ? (
+                      <span className={days < 0 ? 'text-rose-500' : ''}>
+                        {days >= 0 ? t('goals.daysRemaining', { count: days }) : t('goals.daysOverdue', { count: Math.abs(days) })}
+                      </span>
+                    ) : (
+                      <span>{t('goals.noTargetDate')}</span>
+                    )}
+                    {goal.account_name && <span>{goal.account_name}</span>}
+                    {goal.asset_name && <span>{goal.asset_name}</span>}
+                    {goal.asset_group_name && <span>{goal.asset_group_name}</span>}
+                  </div>
+
+                  {canWrite && (
+                    <div className="mt-auto flex items-center gap-1 pt-1">
+                      {goal.tracking_type === 'manual' && goal.status === 'active' && (
+                        <Button size="sm" className="mr-auto h-9 gap-1.5 rounded-xl" onClick={() => setContributing(goal)}>
+                          <PiggyBank size={15} /> {t('goals.contribute')}
+                        </Button>
+                      )}
+                      <div className="ml-auto flex items-center gap-1">
                         {goal.status === 'active' && (
-                          <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
-                            onClick={() => statusMutation.mutate({ id: goal.id, status: 'paused' })}
-                            title={t('goals.pause')}
-                          >
-                            <Pause size={13} />
+                          <button className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-500/10" onClick={() => statusMutation.mutate({ id: goal.id, status: 'paused' })} title={t('goals.pause')}>
+                            <Pause size={15} />
                           </button>
                         )}
                         {goal.status === 'paused' && (
-                          <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
-                            onClick={() => statusMutation.mutate({ id: goal.id, status: 'active' })}
-                            title={t('goals.resume')}
-                          >
-                            <Play size={13} />
+                          <button className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-emerald-50 hover:text-emerald-500 dark:hover:bg-emerald-500/10" onClick={() => statusMutation.mutate({ id: goal.id, status: 'active' })} title={t('goals.resume')}>
+                            <Play size={15} />
                           </button>
                         )}
                         {(goal.status === 'active' || goal.status === 'paused') && (
-                          <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
-                            onClick={() => statusMutation.mutate({ id: goal.id, status: 'completed' })}
-                            title={t('goals.complete')}
-                          >
-                            <CheckCircle2 size={13} />
+                          <button className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-blue-50 hover:text-blue-500 dark:hover:bg-blue-500/10" onClick={() => statusMutation.mutate({ id: goal.id, status: 'completed' })} title={t('goals.complete')}>
+                            <CheckCircle2 size={15} />
                           </button>
                         )}
                         {goal.status !== 'archived' && (
-                          <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-muted-foreground/80 hover:bg-muted transition-colors"
-                            onClick={() => statusMutation.mutate({ id: goal.id, status: 'archived' })}
-                            title={t('goals.archive')}
-                          >
-                            <Archive size={13} />
+                          <button className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-muted-foreground/80" onClick={() => statusMutation.mutate({ id: goal.id, status: 'archived' })} title={t('goals.archive')}>
+                            <Archive size={15} />
                           </button>
                         )}
                         {(goal.status === 'completed' || goal.status === 'archived') && (
-                          <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
-                            onClick={() => statusMutation.mutate({ id: goal.id, status: 'active' })}
-                            title={t('goals.reactivate')}
-                          >
-                            <ArchiveRestore size={13} />
+                          <button className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-emerald-50 hover:text-emerald-500 dark:hover:bg-emerald-500/10" onClick={() => statusMutation.mutate({ id: goal.id, status: 'active' })} title={t('goals.reactivate')}>
+                            <ArchiveRestore size={15} />
                           </button>
                         )}
-                        <button
-                          className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-                          onClick={() => openEditDialog(goal)}
-                          title={t('common.edit')}
-                        >
-                          <Pencil size={13} />
+                        <button className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary" onClick={() => openEditDialog(goal)} title={t('common.edit')}>
+                          <Pencil size={15} />
                         </button>
-                        <button
-                          className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                          onClick={() => setDeletingGoal(goal)}
-                          title={t('common.delete')}
-                        >
-                          <Trash2 size={13} />
+                        <button className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10" onClick={() => setDeletingGoal(goal)} title={t('common.delete')}>
+                          <Trash2 size={15} />
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-10">{t('goals.empty')}</p>
-        )}
-      </SectionCard>
+              </article>
+            )
+          })}
+        </div>
+      ) : (
+        <SectionCard>
+          <p className="py-10 text-center text-sm text-muted-foreground">{t('goals.empty')}</p>
+        </SectionCard>
+      )}
+
+      <ContributeDialog
+        goal={contributing}
+        onClose={() => setContributing(null)}
+        onSave={(goal, amount) => contributeMutation.mutate({ goal, amount })}
+        saving={contributeMutation.isPending}
+      />
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={() => { setDialogOpen(false); setEditing(null) }}>
@@ -441,6 +451,7 @@ export default function GoalsPage() {
                 target_date: targetDate || null,
                 icon: selectedIcon || null,
                 color: selectedColor || null,
+                is_joint: isJoint,
               }
 
               const tt = formData.get('tracking_type') as string
@@ -457,10 +468,11 @@ export default function GoalsPage() {
                 payload.asset_group_id = (formData.get('asset_group_id') as string) || null
               }
 
+              const photo = { file: photoFile, remove: removePhoto }
               if (editing) {
-                updateMutation.mutate({ id: editing.id, ...payload } as Partial<Goal> & { id: string })
+                updateMutation.mutate({ id: editing.id, ...payload, photo } as Partial<Goal> & { id: string; photo: typeof photo })
               } else {
-                createMutation.mutate(payload as Partial<Goal>)
+                createMutation.mutate({ ...payload, photo } as Partial<Goal> & { photo: typeof photo })
               }
             }}
             className="space-y-4"
@@ -468,6 +480,34 @@ export default function GoalsPage() {
             <div className="space-y-2">
               <Label>{t('goals.name')}</Label>
               <Input name="name" defaultValue={editing?.name ?? ''} required />
+            </div>
+
+            <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-3">
+              <div>
+                <Label id="goal-joint-label">{t('goals.jointLabel')}</Label>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t('goals.jointHint')}</p>
+              </div>
+              <Switch checked={isJoint} onCheckedChange={setIsJoint} aria-labelledby="goal-joint-label" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="goal-photo">{t('goals.photo')}</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="goal-photo"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(e) => { setPhotoFile(e.target.files?.[0] ?? null); setRemovePhoto(false) }}
+                />
+                {editing?.has_image && !photoFile && !removePhoto && (
+                  <Button type="button" variant="outline" size="sm" onClick={() => setRemovePhoto(true)}>
+                    {t('goals.removePhoto')}
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {removePhoto ? t('goals.photoWillBeRemoved') : t('goals.photoHint')}
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -652,5 +692,44 @@ export default function GoalsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+
+/** "Put money aside": adds an amount to a manual goal, no form to fill. */
+function ContributeDialog({ goal, onClose, onSave, saving }: {
+  goal: Goal | null
+  onClose: () => void
+  onSave: (goal: Goal, amount: number) => void
+  saving: boolean
+}) {
+  const { t } = useTranslation()
+  const [amount, setAmount] = useState('')
+  if (!goal) return null
+  const value = parseFloat(amount.replace(',', '.'))
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) { setAmount(''); onClose() } }}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t('goals.contributeTitle', { name: goal.name })}</DialogTitle>
+        </DialogHeader>
+        <form
+          id="goal-contribute-form"
+          className="space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (value > 0) { onSave(goal, value); setAmount('') }
+          }}
+        >
+          <Label htmlFor="goal-contribute-amount">{t('goals.contributeAmount')}</Label>
+          <Input id="goal-contribute-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" autoFocus />
+          <p className="text-xs text-muted-foreground">{t('goals.contributeHint')}</p>
+        </form>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => { setAmount(''); onClose() }}>{t('common.cancel')}</Button>
+          <Button type="submit" form="goal-contribute-form" disabled={saving || !(value > 0)}>{t('goals.contribute')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

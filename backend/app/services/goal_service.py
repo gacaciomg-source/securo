@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -18,6 +19,9 @@ from app.services.asset_service import _compute_current_value, _get_latest_value
 from app.services.dashboard_service import _account_balance_at, _get_open_accounts
 from app.services.account_service import get_account_name
 from app.services.fx_rate_service import convert
+from app.providers import get_storage_provider
+
+logger = logging.getLogger(__name__)
 
 
 async def _get_primary_currency(session: AsyncSession, user_id: uuid.UUID) -> str:
@@ -253,6 +257,9 @@ async def _enrich_goal(
         metadata_json=goal.metadata_json,
         created_at=goal.created_at,
         updated_at=goal.updated_at,
+        is_joint=goal.is_joint,
+        has_image=goal.image_key is not None,
+        image_version=_image_version(goal.image_key),
         percentage=percentage,
         monthly_contribution=monthly,
         on_track=on_track,
@@ -313,6 +320,7 @@ async def create_goal(
         icon=data.icon,
         color=data.color,
         metadata_json=data.metadata_json,
+        is_joint=data.is_joint,
     )
     _clear_inactive_tracking_links(goal)
     # Capture the starting balance so on-track logic measures progress from baseline
@@ -355,9 +363,103 @@ async def delete_goal(
     goal = result.scalar_one_or_none()
     if not goal:
         return False
+    image_key = goal.image_key
     await session.delete(goal)
     await session.commit()
+    if image_key:
+        await _delete_stored(image_key)
     return True
+
+
+#: Photo formats a phone or browser produces; anything else is refused.
+GOAL_IMAGE_TYPES = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+}
+GOAL_IMAGE_MAX_BYTES = 8 * 1024 * 1024
+
+
+def _image_version(image_key: Optional[str]) -> Optional[str]:
+    # The key carries a random prefix per upload, so it doubles as a version.
+    return image_key.rsplit("/", 1)[-1].split(".", 1)[0] if image_key else None
+
+
+async def _delete_stored(storage_key: str) -> None:
+    try:
+        await get_storage_provider().delete(storage_key)
+    except Exception:  # noqa: BLE001 - a leftover file must not fail the request
+        logger.warning("Could not delete goal image %s", storage_key)
+
+
+async def _get_workspace_goal(
+    session: AsyncSession, goal_id: uuid.UUID, workspace_id: uuid.UUID
+) -> Optional[Goal]:
+    result = await session.execute(
+        select(Goal).where(Goal.id == goal_id, Goal.workspace_id == workspace_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def set_goal_image(
+    session: AsyncSession,
+    goal_id: uuid.UUID,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
+    content_type: str,
+    data: bytes,
+) -> Optional[GoalRead]:
+    """Store a cover photo for the goal, replacing the previous one.
+
+    Raises ValueError for a type that is not a photo or a file too large.
+    """
+    ext = GOAL_IMAGE_TYPES.get(content_type)
+    if ext is None:
+        raise ValueError("Send a photo (JPEG, PNG, WebP or GIF).")
+    if not data:
+        raise ValueError("The photo is empty.")
+    if len(data) > GOAL_IMAGE_MAX_BYTES:
+        raise ValueError("The photo is too large. The limit is 8 MB.")
+    goal = await _get_workspace_goal(session, goal_id, workspace_id)
+    if goal is None:
+        return None
+    old_key = goal.image_key
+    storage_key = f"{workspace_id}/goals/{goal.id}/{uuid.uuid4().hex[:12]}.{ext}"
+    stored = await get_storage_provider().upload(storage_key, data, content_type)
+    goal.image_key = stored.storage_key
+    goal.image_content_type = content_type
+    await session.commit()
+    await session.refresh(goal)
+    if old_key and old_key != goal.image_key:
+        await _delete_stored(old_key)
+    return await _enrich_goal(session, goal, user_id)
+
+
+async def get_goal_image(
+    session: AsyncSession, goal_id: uuid.UUID, workspace_id: uuid.UUID
+) -> Optional[tuple[bytes, str]]:
+    goal = await _get_workspace_goal(session, goal_id, workspace_id)
+    if goal is None or goal.image_key is None:
+        return None
+    data = await get_storage_provider().download(goal.image_key)
+    return data, goal.image_content_type or "application/octet-stream"
+
+
+async def delete_goal_image(
+    session: AsyncSession, goal_id: uuid.UUID, workspace_id: uuid.UUID, user_id: uuid.UUID
+) -> Optional[GoalRead]:
+    goal = await _get_workspace_goal(session, goal_id, workspace_id)
+    if goal is None:
+        return None
+    old_key = goal.image_key
+    goal.image_key = None
+    goal.image_content_type = None
+    await session.commit()
+    await session.refresh(goal)
+    if old_key:
+        await _delete_stored(old_key)
+    return await _enrich_goal(session, goal, user_id)
 
 
 async def get_goal_summary(

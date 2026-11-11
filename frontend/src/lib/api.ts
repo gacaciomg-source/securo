@@ -1432,6 +1432,21 @@ export const goals = {
     const { data } = await api.get('/goals/summary', { params: { limit } })
     return data
   },
+  uploadImage: async (id: string, file: File): Promise<Goal> => {
+    const body = new FormData()
+    body.append('file', file)
+    const { data } = await api.post(`/goals/${id}/image`, body)
+    return data
+  },
+  deleteImage: async (id: string): Promise<Goal> => {
+    const { data } = await api.delete(`/goals/${id}/image`)
+    return data
+  },
+  // Fetched as a blob: the request needs the auth header an <img src> can't send.
+  imageBlob: async (id: string): Promise<Blob> => {
+    const { data } = await api.get(`/goals/${id}/image`, { responseType: 'blob' })
+    return data
+  },
 }
 
 // Dashboard
